@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Успешный вход</title>
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:linear-gradient(135deg,#071029,#0b1220);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+    }
+    .card{
+      text-align:center;
+      padding:24px 32px;
+      background:#111827;
+      border-radius:12px;
+    }
+    button{
+      margin-top:12px;
+      padding:8px 14px;
+      border:0;
+      border-radius:8px;
+      background:#10b981;
+      color:white;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>✅ Вход выполнен успешно</h2>
+    <p>Привет, <b>{{USERNAME}}</b></p>
+    <p style="opacity:.7">Эту вкладку можно закрыть</p>
+  </div>
+</body>
+</html>

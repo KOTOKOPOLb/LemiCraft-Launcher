@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>LemiCraft_Launcher</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
+    <PackageReference Include="CmlLib.Core" Version="4.0.6" />
+    <PackageReference Include="CmlLib.Core.Auth.Microsoft" Version="3.3.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.81.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Themes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\auth-success.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,2 @@
+@echo OFF
+dotnet publish "LemiCraft Launcher.csproj" -c Release -r win-x64 /p:PublishSingleFile=true /p:SelfContained=true /p:IncludeAllContentForSelfExtract=true /p:PublishTrimmed=false /p:EnableCompressionInSingleFile=false -o publish
