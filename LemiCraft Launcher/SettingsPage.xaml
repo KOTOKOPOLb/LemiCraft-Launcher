@@ -461,7 +461,7 @@
                     <Border Background="#1E293B" CornerRadius="10" Padding="18">
                         <StackPanel>
                             <CheckBox x:Name="ShowLogsCheckBox"
-                                  Content="Показывать окно с логами в отдельном окне"
+                                  Content="Показывать окно с логами"
                                   Style="{StaticResource ModernCheckBox}"
                                   Margin="0,0,0,12"/>
 
@@ -481,7 +481,7 @@
                             <ComboBox x:Name="LauncherBehaviorCombo" SelectedIndex="0">
                                 <ComboBoxItem Content="Ничего не делать"/>
                                 <ComboBoxItem Content="Закрыть лаунчер"/>
-                                <ComboBoxItem Content="Свернуть лаунчер"/>
+                                <ComboBoxItem Content="Скрыть лаунчер"/>
                             </ComboBox>
                         </StackPanel>
                     </Border>

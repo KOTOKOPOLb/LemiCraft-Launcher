@@ -165,9 +165,8 @@ namespace LemiCraft_Launcher
                 JvmArgs = JvmArgsBox.Text,
                 JavaPath = JavaPathBox.Text,
                 GamePath = GamePathBox.Text,
-                CloseOnStart = LauncherBehaviorCombo.SelectedIndex == 0,
-                ShowLogs = ShowLogsCheckBox.IsChecked == false,
-                AutoConnect = AutoConnectCheckBox.IsChecked == false,
+                ShowLogs = ShowLogsCheckBox.IsChecked == true,
+                AutoConnect = AutoConnectCheckBox.IsChecked == true,
                 LauncherBehavior = LauncherBehaviorCombo.SelectedIndex
             };
 

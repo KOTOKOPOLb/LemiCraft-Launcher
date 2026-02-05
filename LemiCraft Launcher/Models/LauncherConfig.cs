@@ -10,12 +10,7 @@ namespace LemiCraft_Launcher.Models
             "minecraft"
         );
 
-        // 0 = Ничего не делать
-        // 1 = Закрыть лаунчер
-        // 2 = Свернуть лаунчер
         public int LauncherBehavior { get; set; } = 0;
-
-        public bool CloseOnStart { get; set; }
 
         public bool ShowLogs { get; set; }
         public bool AutoConnect { get; set; }

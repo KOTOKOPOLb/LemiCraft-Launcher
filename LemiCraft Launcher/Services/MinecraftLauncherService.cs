@@ -111,67 +111,69 @@ namespace LemiCraft_Launcher.Services
             }
         }
 
-    private static async Task DownloadAuthlibAsync()
-    {
-        string api = "https://api.github.com/repos/yushijinhun/authlib-injector/releases/latest";
-        using var req = new HttpRequestMessage(HttpMethod.Get, api);
-        req.Headers.UserAgent.ParseAdd("LemiCraftLauncher/1.0");
-
-        using var resp = await _httpClient.SendAsync(req);
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"GitHub API error: {resp.StatusCode}");
-
-        using var stream = await resp.Content.ReadAsStreamAsync();
-        using var doc = await JsonDocument.ParseAsync(stream);
-
-        if (!doc.RootElement.TryGetProperty("tag_name", out var tagElem))
-            throw new InvalidOperationException("Не удалось получить tag_name последнего релиза authlib-injector.");
-
-        var tag = tagElem.GetString() ?? throw new InvalidOperationException("Пустой tag_name.");
-        var shortTag = tag.StartsWith("v") ? tag.Substring(1) : tag;
-
-        var candidateUrl = $"https://github.com/yushijinhun/authlib-injector/releases/download/{tag}/authlib-injector-{shortTag}.jar";
-
-        using var tryResp = await _httpClient.GetAsync(candidateUrl);
-        if (tryResp.IsSuccessStatusCode)
+        private static async Task DownloadAuthlibAsync()
         {
-            var bytes = await tryResp.Content.ReadAsByteArrayAsync();
-            Directory.CreateDirectory(Path.GetDirectoryName(AuthlibPath)!);
-            await File.WriteAllBytesAsync(AuthlibPath, bytes);
-            return;
-        }
+            string api = "https://api.github.com/repos/yushijinhun/authlib-injector/releases/latest";
+            using var req = new HttpRequestMessage(HttpMethod.Get, api);
+            req.Headers.UserAgent.ParseAdd("LemiCraftLauncher/1.0");
 
-        if (doc.RootElement.TryGetProperty("assets", out var assets))
-        {
-            foreach (var asset in assets.EnumerateArray())
+            using var resp = await _httpClient.SendAsync(req);
+            if (!resp.IsSuccessStatusCode)
+                throw new InvalidOperationException($"GitHub API error: {resp.StatusCode}");
+
+            using var stream = await resp.Content.ReadAsStreamAsync();
+            using var doc = await JsonDocument.ParseAsync(stream);
+
+            if (!doc.RootElement.TryGetProperty("tag_name", out var tagElem))
+                throw new InvalidOperationException("Не удалось получить tag_name последнего релиза authlib-injector.");
+
+            var tag = tagElem.GetString() ?? throw new InvalidOperationException("Пустой tag_name.");
+            var shortTag = tag.StartsWith("v") ? tag.Substring(1) : tag;
+
+            var candidateUrl = $"https://github.com/yushijinhun/authlib-injector/releases/download/{tag}/authlib-injector-{shortTag}.jar";
+
+            using var tryResp = await _httpClient.GetAsync(candidateUrl);
+            if (tryResp.IsSuccessStatusCode)
             {
-                if (asset.TryGetProperty("name", out var nameElem)
-                    && asset.TryGetProperty("browser_download_url", out var urlElem))
+                var bytes = await tryResp.Content.ReadAsByteArrayAsync();
+                Directory.CreateDirectory(Path.GetDirectoryName(AuthlibPath)!);
+                await File.WriteAllBytesAsync(AuthlibPath, bytes);
+                return;
+            }
+
+            if (doc.RootElement.TryGetProperty("assets", out var assets))
+            {
+                foreach (var asset in assets.EnumerateArray())
                 {
-                    var name = nameElem.GetString() ?? "";
-                    var url = urlElem.GetString() ?? "";
-                    if (name.Contains("authlib-injector") && name.EndsWith(".jar") && !string.IsNullOrEmpty(url))
+                    if (asset.TryGetProperty("name", out var nameElem)
+                        && asset.TryGetProperty("browser_download_url", out var urlElem))
                     {
-                        using var aResp = await _httpClient.GetAsync(url);
-                        if (aResp.IsSuccessStatusCode)
+                        var name = nameElem.GetString() ?? "";
+                        var url = urlElem.GetString() ?? "";
+                        if (name.Contains("authlib-injector") && name.EndsWith(".jar") && !string.IsNullOrEmpty(url))
                         {
-                            var bytes = await aResp.Content.ReadAsByteArrayAsync();
-                            Directory.CreateDirectory(Path.GetDirectoryName(AuthlibPath)!);
-                            await File.WriteAllBytesAsync(AuthlibPath, bytes);
-                            return;
+                            using var aResp = await _httpClient.GetAsync(url);
+                            if (aResp.IsSuccessStatusCode)
+                            {
+                                var bytes = await aResp.Content.ReadAsByteArrayAsync();
+                                Directory.CreateDirectory(Path.GetDirectoryName(AuthlibPath)!);
+                                await File.WriteAllBytesAsync(AuthlibPath, bytes);
+                                return;
+                            }
                         }
                     }
                 }
             }
+
+            throw new InvalidOperationException($"Не удалось скачать authlib-injector ни по {candidateUrl}, ни из ассетов последнего релиза.");
         }
 
-        throw new InvalidOperationException($"Не удалось скачать authlib-injector ни по {candidateUrl}, ни из ассетов последнего релиза.");
-    }
-
-    public static async Task<Process> LaunchAsync(UserProfile profile, LauncherConfig config)
+        public static async Task<Process> LaunchAsync(UserProfile profile, LauncherConfig config)
         {
             var path = new MinecraftPath(GameDir);
             var launcher = new MinecraftLauncher(path);
+
+            await launcher.GetAllVersionsAsync();
 
             var fabricVersion = FabricInstaller.GetVersionName(MC_VERSION, FABRIC_LOADER);
 
@@ -226,8 +228,5 @@ namespace LemiCraft_Launcher.Services
                 return "Ошибка проверки";
             }
         }
-
-        public static string GetFabricVersionName() => $"fabric-loader-{FABRIC_LOADER}-{MC_VERSION}";
     }
-
 }

@@ -1,12 +1,9 @@
-using CmlLib.Core;
 using CmlLib.Core.Auth;
 using CmlLib.Core.Auth.Microsoft;
-using CmlLib.Core.ProcessBuilder;
 using LemiCraft_Launcher.Services;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
-using System.Net.Http;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -99,7 +96,7 @@ namespace LemiCraft_Launcher
                 DragMove();
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        private void CloseButton_Click(object? sender, RoutedEventArgs e)
         {
             if (_logsWindow != null)
             {
@@ -198,6 +195,9 @@ namespace LemiCraft_Launcher
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.CreateNoWindow = true;
 
+                process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+                process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+
                 if (_logsWindow != null)
                     _logsWindow.SetStatus("Запуск игры...", "#FFA500");
 
@@ -224,10 +224,16 @@ namespace LemiCraft_Launcher
 
                 _ = Task.Run(() =>
                 {
+                    if (config.LauncherBehavior == 1)
+                        Dispatcher.Invoke(() => CloseButton_Click(null, null));
+                    else if (config.LauncherBehavior == 2)
+                        Dispatcher.Invoke(() => Hide());
+
                     process.WaitForExit();
 
                     Dispatcher.Invoke(() =>
                     {
+                        Show();
                         FooterPlayButtonIcon.Text = "▶️";
                         FooterPlayButtonText.Text = "Играть";
                         PlayButton.IsEnabled = true;
@@ -284,79 +290,6 @@ namespace LemiCraft_Launcher
             }
 
             return MSession.CreateOfflineSession(profile.Username ?? "Player");
-        }
-
-        private async Task<string> EnsureAuthlibInjectorAsync()
-        {
-            try
-            {
-                var cfg = ConfigService.Load();
-                var localDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
-                Directory.CreateDirectory(localDir);
-                var jarPath = Path.Combine(localDir, "authlib-injector.jar");
-
-                if (!string.IsNullOrWhiteSpace(cfg.AuthlibInjectorPath) && File.Exists(cfg.AuthlibInjectorPath))
-                    return cfg.AuthlibInjectorPath;
-
-                if (File.Exists(jarPath))
-                    return jarPath;
-
-                if (string.IsNullOrWhiteSpace(cfg.AuthlibInjectorDownloadUrl))
-                    return "";
-
-                using var http = new HttpClient();
-                var resp = await http.GetAsync(cfg.AuthlibInjectorDownloadUrl);
-                if (!resp.IsSuccessStatusCode) return "";
-
-                await using var fs = new FileStream(jarPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                await resp.Content.CopyToAsync(fs);
-                return jarPath;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("EnsureAuthlibInjectorAsync error: " + ex);
-                return "";
-            }
-        }
-
-        private async Task InstallLocalBuildFromZipAsync(string zipPath, string versionName, MinecraftLauncher launcher)
-        {
-            try
-            {
-                var mcDir = new MinecraftPath().BasePath;
-                var versionsDir = Path.Combine(mcDir, "versions");
-                Directory.CreateDirectory(versionsDir);
-
-                var temp = Path.Combine(Path.GetTempPath(), "LemiCraftBuild", Guid.NewGuid().ToString("N"));
-                Directory.CreateDirectory(temp);
-                ZipFile.ExtractToDirectory(zipPath, temp);
-
-                var from = Path.Combine(temp, "versions", versionName);
-                if (Directory.Exists(from))
-                {
-                    var to = Path.Combine(versionsDir, versionName);
-                    if (Directory.Exists(to)) Directory.Delete(to, true);
-                    Directory.Move(from, to);
-                }
-                else
-                {
-                    var to = Path.Combine(versionsDir, versionName);
-                    Directory.CreateDirectory(to);
-                    foreach (var f in Directory.GetFiles(temp, "*", SearchOption.AllDirectories))
-                    {
-                        var rel = Path.GetRelativePath(temp, f);
-                        var dest = Path.Combine(to, rel);
-                        Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
-                        File.Copy(f, dest, true);
-                    }
-                }
-
-                await Task.Delay(200);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("InstallLocalBuildFromZipAsync error: " + ex.Message);
-            }
         }
 
         public void AccountInfo_Click(object sender, MouseButtonEventArgs e)
@@ -438,6 +371,7 @@ namespace LemiCraft_Launcher
                 PlayButton.IsEnabled = false;
             }
         }
+        
         public async Task LoadUserAvatarAsync(string username)
         {
             try
@@ -465,12 +399,13 @@ namespace LemiCraft_Launcher
                 Debug.WriteLine($"Ошибка загрузки аватара: {ex.Message}");
             }
         }
+        
         private void ResetAvatar()
         {
             PlayerAvatar.Background = new SolidColorBrush(Color.FromRgb(55, 65, 81));
             PlayerAvatarEmoji.Visibility = Visibility.Visible;
         }
-
+        
         public void OpenLogsWindow()
         {
             if (_logsWindow == null)

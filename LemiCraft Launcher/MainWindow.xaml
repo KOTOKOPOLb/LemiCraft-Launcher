@@ -214,14 +214,10 @@
                 <Grid Margin="30,0" Height="90">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <!-- Профиль -->
                         <ColumnDefinition Width="*"/>
-                        <!-- Прогресс -->
                         <ColumnDefinition Width="Auto"/>
-                        <!-- Кнопки -->
                     </Grid.ColumnDefinitions>
 
-                    <!-- Профиль (слева) -->
                     <StackPanel x:Name="AccountInfoPanel"
                    Grid.Column="0"
                    Orientation="Horizontal" 
@@ -264,7 +260,6 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Прогресс (центр) -->
                     <Border x:Name="FooterProgressPanel"
                 Grid.Column="1"
                 Visibility="Collapsed"
@@ -304,7 +299,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Кнопки (справа) -->
                     <StackPanel x:Name="ActionButtonsPanel"
                    Grid.Column="2"
                    Orientation="Horizontal" 

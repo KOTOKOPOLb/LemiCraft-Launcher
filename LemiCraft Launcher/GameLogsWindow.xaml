@@ -58,7 +58,6 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Title Bar -->
             <Border Grid.Row="0" 
                     Background="#1E293B" 
                     CornerRadius="12,12,0,0"
@@ -121,26 +120,29 @@
                 </Grid>
             </Border>
 
-            <!-- Logs Content -->
             <Border Grid.Row="1" Margin="0" Background="#0F172A">
-                <ScrollViewer x:Name="LogScrollViewer"
+                <RichTextBox x:Name="LogTextBox"
+                             Background="Transparent"
+                             Foreground="#E5E7EB"
+                             BorderThickness="0"
+                             Padding="20"
+                             FontFamily="Consolas, Courier New, monospace"
+                             FontSize="12"
+                             IsReadOnly="True"
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Auto">
-                    <TextBox x:Name="LogTextBox"
-                            Background="Transparent"
-                            Foreground="#E5E7EB"
-                            BorderThickness="0"
-                            Padding="20"
-                            FontFamily="Consolas,Courier New,monospace"
-                            FontSize="12"
-                            TextWrapping="NoWrap"
-                            IsReadOnly="True"
-                            VerticalScrollBarVisibility="Disabled"
-                            HorizontalScrollBarVisibility="Disabled"/>
-                </ScrollViewer>
+                    <RichTextBox.Resources>
+                        <Style TargetType="Paragraph">
+                            <Setter Property="Margin" Value="0"/>
+                        </Style>
+                    </RichTextBox.Resources>
+
+                    <FlowDocument ColumnWidth="{Binding ElementName=LogTextBox, Path=ActualWidth}">
+                        <Paragraph />
+                    </FlowDocument>
+                </RichTextBox>
             </Border>
 
-            <!-- Footer -->
             <Border Grid.Row="2" 
                     Background="#1E293B" 
                     CornerRadius="0,0,12,12"
