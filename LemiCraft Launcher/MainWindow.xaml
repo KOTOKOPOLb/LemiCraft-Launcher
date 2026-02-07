@@ -13,19 +13,19 @@
     <Window.Resources>
         <Storyboard x:Key="WindowFadeIn">
             <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                           From="0" To="1" Duration="0:0:0.3">
+                             From="0" To="1" Duration="0:0:0.3">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                           From="0.95" To="1" Duration="0:0:0.3">
+                             From="0.95" To="1" Duration="0:0:0.3">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                           From="0.95" To="1" Duration="0:0:0.3">
+                             From="0.95" To="1" Duration="0:0:0.3">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
@@ -34,12 +34,12 @@
 
         <Storyboard x:Key="WindowFadeOut">
             <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                           From="1" To="0" Duration="0:0:0.2"/>
+                             From="1" To="0" Duration="0:0:0.2"/>
         </Storyboard>
 
         <Storyboard x:Key="PageFadeIn">
             <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                           From="0" To="1" Duration="0:0:0.3">
+                             From="0" To="1" Duration="0:0:0.3">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
@@ -48,7 +48,7 @@
 
         <Storyboard x:Key="PageFadeOut">
             <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                           From="1" To="0" Duration="0:0:0.2"/>
+                             From="1" To="0" Duration="0:0:0.2"/>
         </Storyboard>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
@@ -163,33 +163,49 @@
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid Margin="24,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <Ellipse Width="36" Height="36" Fill="#22C55E" Margin="0,0,12,0">
-                            <Ellipse.Effect>
+                        <Border Width="36" Height="36" Margin="0,0,12,0">
+                            <Border.Clip>
+                                <EllipseGeometry Center="18,18" RadiusX="18" RadiusY="18"/>
+                            </Border.Clip>
+                            <Border.Effect>
                                 <DropShadowEffect Color="#22C55E" BlurRadius="10" ShadowDepth="0" Opacity="0.6"/>
-                            </Ellipse.Effect>
-                        </Ellipse>
-                        <TextBlock Text="L" 
-                                  FontSize="20" 
-                                  FontWeight="Bold" 
-                                  Foreground="White"
-                                  VerticalAlignment="Center"
-                                  Margin="-42,0,20,0"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Image x:Name="LauncherLogo"
+                                       Source="pack://application:,,,/Resources/logo.png"
+                                       Stretch="UniformToFill"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Visibility="Visible"/>
+                                <TextBlock x:Name="LogoFallback"
+                                           Text="L" 
+                                           FontSize="20" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+
                         <TextBlock Text="LemiCraft Launcher" 
-                                  FontSize="16" 
-                                  FontWeight="Medium"
-                                  Foreground="White" 
-                                  VerticalAlignment="Center"/>
-                        <Border Background="#0F172A"
-                               Padding="8,4"
-                               CornerRadius="4"
-                               Margin="12,0,0,0"
-                               VerticalAlignment="Center">
-                            <TextBlock Text="BETA" 
-                                      FontSize="10" 
-                                      FontWeight="Bold"
-                                      Foreground="#22C55E"
-                                      VerticalAlignment="Center"
-                                      HorizontalAlignment="Center">
+                                   FontSize="16" 
+                                   FontWeight="Medium"
+                                   Foreground="White" 
+                                   VerticalAlignment="Center"/>
+
+                        <Border x:Name="VersionBadge"
+                                Background="#0F172A"
+                                Padding="8,4"
+                                CornerRadius="4"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="VersionText"
+                                       Text="v1.0.0" 
+                                       FontSize="10" 
+                                       FontWeight="Bold"
+                                       Foreground="#22C55E"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center">
                                 <TextBlock.Effect>
                                     <DropShadowEffect Color="#22C55E" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
                                 </TextBlock.Effect>
@@ -219,11 +235,11 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel x:Name="AccountInfoPanel"
-                   Grid.Column="0"
-                   Orientation="Horizontal" 
-                   VerticalAlignment="Center"
-                   Cursor="Hand"
-                   MouseLeftButtonDown="AccountInfo_Click">
+                                Grid.Column="0"
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center"
+                                Cursor="Hand"
+                                MouseLeftButtonDown="AccountInfo_Click">
 
                         <StackPanel.ContextMenu>
                             <ContextMenu x:Name="AccountMenu">
@@ -231,91 +247,123 @@
                         </StackPanel.ContextMenu>
 
                         <Border x:Name="PlayerAvatar"
-                    Width="48" 
-                    Height="48" 
-                    CornerRadius="8"
-                    Margin="0,0,14,0"
-                    ClipToBounds="True">
+                                Width="48" 
+                                Height="48" 
+                                CornerRadius="8"
+                                Margin="0,0,14,0"
+                                ClipToBounds="True">
                             <Border.Background>
                                 <SolidColorBrush Color="#374151"/>
                             </Border.Background>
 
                             <TextBlock x:Name="PlayerAvatarEmoji"
-                           Text="👤" 
-                           FontSize="24" 
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center"/>
+                                       Text="👤" 
+                                       FontSize="24" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"/>
                         </Border>
 
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="UsernameText" 
-                          Text="Не авторизован" 
-                          FontSize="14" 
-                          Foreground="White"
-                          FontWeight="SemiBold"/>
+                                               Text="Не авторизован" 
+                                               FontSize="14" 
+                                               Foreground="White"
+                                               FontWeight="SemiBold"/>
                             <TextBlock x:Name="AccountTypeText" 
-                          Text="Нажмите для входа" 
-                          FontSize="12" 
-                          Foreground="#22C55E"/>
+                                       Text="Нажмите для входа" 
+                                       FontSize="12" 
+                                       Foreground="#22C55E"/>
                         </StackPanel>
                     </StackPanel>
 
                     <Border x:Name="FooterProgressPanel"
-                Grid.Column="1"
-                Visibility="Collapsed"
-                Background="#0F172A"
-                CornerRadius="8"
-                Padding="16,10"
-                Margin="20,0">
+                            Grid.Column="1"
+                            Visibility="Collapsed"
+                            Background="#1E293B"
+                            CornerRadius="10"
+                            Padding="20,12"
+                            Height="54"
+                            Margin="20,0"
+                            BorderBrush="#374151"
+                            BorderThickness="1">
                         <Grid>
-                            <StackPanel>
-                                <TextBlock x:Name="FooterProgressText" 
-                              Text="Подготовка..." 
-                              Foreground="#9CA3AF" 
-                              FontSize="11" 
-                              Margin="0,0,0,4"/>
-                                <ProgressBar x:Name="FooterProgressBar" 
-                                Height="4" 
-                                Maximum="100" 
-                                Value="0" 
-                                Background="#374151" 
-                                Foreground="#22C55E" 
-                                BorderThickness="0"/>
-                            </StackPanel>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                            <StackPanel Orientation="Horizontal" 
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center">
-                                <TextBlock x:Name="FooterFilesText" 
-                              Text="0 / 0" 
-                              Foreground="#6B7280" 
-                              FontSize="10" 
-                              Margin="0,0,8,0"/>
-                                <TextBlock x:Name="FooterPercentText" 
-                              Text="0%" 
-                              Foreground="#6B7280" 
-                              FontSize="10"/>
-                            </StackPanel>
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <TextBlock x:Name="FooterProgressText" 
+                                           Text="Подготовка..." 
+                                           Foreground="#E5E7EB" 
+                                           FontSize="12" 
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" 
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center">
+                                    <TextBlock x:Name="FooterFilesText" 
+                                               Text="0 / 0" 
+                                               Foreground="#9CA3AF" 
+                                               FontSize="11" 
+                                               FontWeight="Medium"
+                                               Margin="0,0,8,0"/>
+                                    <TextBlock x:Name="FooterPercentText" 
+                                               Text="0%" 
+                                               Foreground="#22C55E" 
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <ProgressBar x:Name="FooterProgressBar" 
+                                         Grid.Row="1"
+                                         Height="6" 
+                                         Maximum="100" 
+                                         Value="0" 
+                                         Background="#0F172A" 
+                                         Foreground="#22C55E" 
+                                         BorderThickness="0">
+                                <ProgressBar.Template>
+                                    <ControlTemplate TargetType="ProgressBar">
+                                        <Border Background="{TemplateBinding Background}" 
+                                                CornerRadius="3">
+                                            <Border x:Name="PART_Track">
+                                                <Border x:Name="PART_Indicator" 
+                                                        HorizontalAlignment="Left"
+                                                        Background="{TemplateBinding Foreground}"
+                                                        CornerRadius="3">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#22C55E" 
+                                                                          BlurRadius="8" 
+                                                                          ShadowDepth="0" 
+                                                                          Opacity="0.5"/>
+                                                    </Border.Effect>
+                                                </Border>
+                                            </Border>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ProgressBar.Template>
+                            </ProgressBar>
                         </Grid>
                     </Border>
 
                     <StackPanel x:Name="ActionButtonsPanel"
-                   Grid.Column="2"
-                   Orientation="Horizontal" 
-                   VerticalAlignment="Center">
+                                Grid.Column="2"
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center">
                         <Button x:Name="SettingsButton"
-                   Content="⚙️ Настройки" 
-                   Style="{StaticResource SecondaryButton}"
-                   Margin="0,0,12,0"
-                   Click="SettingsButton_Click"/>
-
+                                        Content="⚙️ Настройки" 
+                                        Style="{StaticResource SecondaryButton}"
+                                        Margin="0,0,12,0"
+                                        Click="SettingsButton_Click"/>
                         <Button x:Name="PlayButton"
-                     Style="{StaticResource PrimaryButton}"
-                     Width="220"
-                     Height="54"
-                     FontSize="17"
-                     Click="PlayButton_Click"
-                     IsEnabled="False">
+                                Style="{StaticResource PrimaryButton}"
+                                Width="220"
+                                Height="54"
+                                FontSize="17"
+                                Click="PlayButton_Click"
+                                IsEnabled="False">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <TextBlock x:Name="FooterPlayButtonIcon" Text="▶️" FontSize="18" Margin="0,0,10,0"/>
                                 <TextBlock x:Name="FooterPlayButtonText" Text="Играть" FontSize="16"/>

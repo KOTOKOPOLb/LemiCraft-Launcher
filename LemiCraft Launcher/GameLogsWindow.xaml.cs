@@ -4,10 +4,10 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using LemiCraft_Launcher.Windows;
 using Clipboard = System.Windows.Clipboard;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
-using MessageBox = System.Windows.MessageBox;
 
 namespace LemiCraft_Launcher
 {
@@ -174,11 +174,11 @@ namespace LemiCraft_Launcher
             {
                 var textRange = new TextRange(LogTextBox.Document.ContentStart, LogTextBox.Document.ContentEnd);
                 Clipboard.SetText(textRange.Text);
-                MessageBox.Show("Логи скопированы в буфер обмена!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomMessageBox.ShowInformation("Логи скопированы в буфер обмена!", "Успех");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка копирования: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowError($"Ошибка копирования: {ex.Message}");
             }
         }
 

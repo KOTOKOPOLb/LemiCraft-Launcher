@@ -9,12 +9,21 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <Company>LemiCraft</Company>
+    <Product>LemiCraft Launcher</Product>
+    <Copyright>© 2026 LemiCraft</Copyright>
+    <Description>Официальный лаунчер для проекта LemiCraft</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
     <PackageReference Include="CmlLib.Core" Version="4.0.6" />
     <PackageReference Include="CmlLib.Core.Auth.Microsoft" Version="3.3.1" />
+    <PackageReference Include="Markdig" Version="0.44.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.81.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
@@ -24,6 +33,11 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <Folder Include="Themes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\logo.png" />
+    <Resource Include="Resources\logo.ico" />
   </ItemGroup>
 
   <ItemGroup>

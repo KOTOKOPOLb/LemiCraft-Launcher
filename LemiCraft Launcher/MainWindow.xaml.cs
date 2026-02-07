@@ -1,6 +1,8 @@
 using CmlLib.Core.Auth;
 using CmlLib.Core.Auth.Microsoft;
 using LemiCraft_Launcher.Services;
+using LemiCraft_Launcher.Windows;
+using LemiCraft_Launcher.Models;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -11,8 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using Application = System.Windows.Application;
 using Color = System.Windows.Media.Color;
-using MessageBox = System.Windows.MessageBox;
 
 namespace LemiCraft_Launcher
 {
@@ -25,6 +27,9 @@ namespace LemiCraft_Launcher
         public MainWindow()
         {
             InitializeComponent();
+            Loaded += MainWindow_Loaded;
+            Closed += MainWindow_Closed;
+            VersionText.Text = $"v{AppVersion.Current}";
             MainFrame.Navigate(new HomePage());
             _ = TryAutoLoginAsync();
             AvatarService.CleanOldAvatars();
@@ -105,7 +110,7 @@ namespace LemiCraft_Launcher
             }
 
             var fadeOut = (Storyboard)Resources["WindowFadeOut"];
-            fadeOut.Completed += (s, a) => System.Windows.Application.Current.Shutdown();
+            fadeOut.Completed += (s, a) => Close();
             fadeOut.Begin(this);
         }
 
@@ -146,7 +151,7 @@ namespace LemiCraft_Launcher
             try
             {
                 await MinecraftLauncherService.InstallAsync();
-                MessageBox.Show("Установка завершена!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomMessageBox.ShowSuccess("Установка завершена!");
 
                 FooterPlayButtonIcon.Text = "▶️";
                 FooterPlayButtonText.Text = "Играть";
@@ -154,7 +159,7 @@ namespace LemiCraft_Launcher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка установки:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowError($"Ошибка установки:\n{ex.Message}");
                 FooterPlayButtonIcon.Text = "📥";
                 FooterPlayButtonText.Text = "Установить";
                 PlayButton.IsEnabled = true;
@@ -173,7 +178,7 @@ namespace LemiCraft_Launcher
             var profile = AuthService.LoadProfile();
             if (profile == null)
             {
-                MessageBox.Show("Сначала войдите в аккаунт!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CustomMessageBox.ShowWarning("Сначала войдите в аккаунт!");
                 MainFrame.Navigate(new LoginPage());
                 return;
             }
@@ -245,51 +250,13 @@ namespace LemiCraft_Launcher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка запуска:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowError($"Ошибка запуска:\n{ex.Message}");
                 FooterPlayButtonIcon.Text = "▶️";
                 FooterPlayButtonText.Text = "Играть";
                 PlayButton.IsEnabled = true;
                 AccountInfoPanel.Visibility = Visibility.Visible;
                 SettingsButton.IsEnabled = true;
             }
-        }
-
-        public void SetPlayButtonState(string icon, string text, bool enabled)
-        {
-            FooterPlayButtonIcon.Text = icon;
-            FooterPlayButtonText.Text = text;
-            PlayButton.IsEnabled = enabled;
-        }
-
-        private async Task<MSession> GetSessionForLaunchAsync()
-        {
-            var profile = AuthService.LoadProfile();
-            if (profile == null)
-                return MSession.CreateOfflineSession("Player");
-
-            if (profile.Provider == "Microsoft")
-            {
-                try
-                {
-                    var handler = JELoginHandlerBuilder.BuildDefault();
-                    var session = await handler.Authenticate();
-                    if (session != null && !string.IsNullOrWhiteSpace(session.AccessToken))
-                        return session;
-
-                    return MSession.CreateOfflineSession(profile.Username);
-                }
-                catch
-                {
-                    return MSession.CreateOfflineSession(profile.Username);
-                }
-            }
-            else if (profile.Provider == "Ely.by")
-            {
-                var session = new MSession(profile.Username, profile.AccessToken ?? "", profile.Uuid ?? "");
-                return session;
-            }
-
-            return MSession.CreateOfflineSession(profile.Username ?? "Player");
         }
 
         public void AccountInfo_Click(object sender, MouseButtonEventArgs e)
@@ -340,14 +307,12 @@ namespace LemiCraft_Launcher
 
         private void Logout()
         {
-            var result = MessageBox.Show(
+            var result = CustomMessageBox.ShowQuestion(
                 "Вы уверены, что хотите выйти из аккаунта?",
-                "Выход",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question
+                "Выход"
             );
 
-            if (result == MessageBoxResult.Yes)
+            if (result == CustomMessageBox.MessageBoxResult.Yes)
             {
                 AuthService.Logout();
                 UpdateAccountInfo("", false);
@@ -416,6 +381,77 @@ namespace LemiCraft_Launcher
 
             if (!_logsWindow.IsVisible)
                 _logsWindow.Show();
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e) => await CheckForUpdatesAsync();
+
+        private async Task CheckForUpdatesAsync()
+        {
+            try
+            {
+                var result = await UpdateService.CheckForUpdatesAsync();
+
+                if (result.LauncherUpdateAvailable && result.LauncherVersion != null)
+                {
+                    var updateWindow = new UpdateWindow(result.LauncherVersion)
+                    {
+                        Owner = this
+                    };
+                    updateWindow.ShowDialog();
+                }
+
+                if (result.ModpackUpdateAvailable && result.ModpackVersion != null)
+                {
+                    FooterPlayButtonText.Text = "Обновить сборку";
+                    FooterPlayButtonIcon.Text = "↓";
+                    PlayButton.Tag = result.ModpackVersion;
+                    PlayButton.Click -= PlayButton_Click;
+                    PlayButton.Click += UpdateModpack_Click;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка проверки обновлений: {ex.Message}");
+            }
+        }
+
+        private async void UpdateModpack_Click(object sender, RoutedEventArgs e)
+        {
+            if (PlayButton.Tag is ModpackVersion version)
+            {
+                var updateWindow = new ModpackUpdateWindow(version)
+                {
+                    Owner = this
+                };
+
+                updateWindow.ShowDialog();
+
+                if (updateWindow.UpdateSuccessful)
+                {
+                    FooterPlayButtonText.Text = "Играть";
+                    FooterPlayButtonIcon.Text = "▶️";
+                    PlayButton.Tag = null;
+                    PlayButton.Click -= UpdateModpack_Click;
+                    PlayButton.Click += PlayButton_Click;
+                }
+            }
+        }
+
+        private void MainWindow_Closed(object? sender, EventArgs e)
+        {
+            if (_logsWindow != null && _logsWindow.IsVisible)
+            {
+                _logsWindow.Close();
+                _logsWindow = null;
+            }
+
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window != this && window.IsVisible)
+                    window.Close();
+            }
+
+            Application.Current.Shutdown();
         }
     }
 }

@@ -49,24 +49,6 @@ namespace LemiCraft_Launcher.Services
                 return null;
             }
         }
-        public static void ClearCache()
-        {
-            try
-            {
-                if (Directory.Exists(CacheDir))
-                {
-                    foreach (var file in Directory.GetFiles(CacheDir))
-                    {
-                        try
-                        {
-                            File.Delete(file);
-                        }
-                        catch { }
-                    }
-                }
-            }
-            catch { }
-        }
 
         public static void CleanOldAvatars()
         {
@@ -90,28 +72,6 @@ namespace LemiCraft_Launcher.Services
             }
             catch { }
         }
-        public static double GetCacheSizeMB()
-        {
-            try
-            {
-                if (!Directory.Exists(CacheDir))
-                    return 0;
-
-                long totalBytes = 0;
-                foreach (var file in Directory.GetFiles(CacheDir))
-                {
-                    var fileInfo = new FileInfo(file);
-                    totalBytes += fileInfo.Length;
-                }
-
-                return totalBytes / (1024.0 * 1024.0);
-            }
-            catch
-            {
-                return 0;
-            }
-        }
-
         private static string GetCachedFileName(string nickname, bool use3D)
         {
             using var md5 = MD5.Create();

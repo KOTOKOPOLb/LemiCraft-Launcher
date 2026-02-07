@@ -1,12 +1,11 @@
 using LemiCraft_Launcher.Services;
+using LemiCraft_Launcher.Models;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
+using LemiCraft_Launcher.Windows;
 using Brushes = System.Windows.Media.Brushes;
-using Color = System.Windows.Media.Color;
-using MessageBox = System.Windows.MessageBox;
 
 namespace LemiCraft_Launcher
 {
@@ -31,8 +30,8 @@ namespace LemiCraft_Launcher
         public HomePage()
         {
             InitializeComponent();
-            UpdateModpackStatus();
             _ = UpdateServerStatus();
+            _ = LoadNewsAsync();
             Loaded += (s, e) => UpdateFades();
         }
 
@@ -73,11 +72,6 @@ namespace LemiCraft_Launcher
             if (BottomFade != null) BottomFade.BeginAnimation(OpacityProperty, bottomAnim);
         }
 
-        private void UpdateModpackStatus()
-        {
-            // Этот метод теперь вызывается из UpdateInstallStatus
-        }
-
         private async Task UpdateServerStatus()
         {
             var status = await MineStatClient.PingAsync("lemicraft.ru", 25565, 4000);
@@ -110,8 +104,52 @@ namespace LemiCraft_Launcher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Не удалось открыть ссылку: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowError($"Не удалось открыть ссылку: {ex.Message}");
             }
         }
+
+        private async Task LoadNewsAsync(bool forceRefresh = false)
+        {
+            try
+            {
+                NewsLoadingPanel.Visibility = Visibility.Visible;
+                EmptyNewsPanel.Visibility = Visibility.Collapsed;
+                NewsItemsControl.ItemsSource = null;
+
+                var news = await NewsService.GetNewsAsync(
+                    filter: new NewsFilter { Limit = 10 },
+                    forceRefresh: forceRefresh
+                );
+
+                if (news.Count > 0)
+                {
+                    NewsItemsControl.ItemsSource = news;
+                    EmptyNewsPanel.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    EmptyNewsPanel.Visibility = Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка загрузки новостей: {ex.Message}");
+                EmptyNewsPanel.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                NewsLoadingPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void RefreshNews_Click(object sender, RoutedEventArgs e) => await LoadNewsAsync(forceRefresh: true);
+
+        private void NewsCard_Clicked(object sender, NewsItem news)
+        {
+            var detailWindow = new NewsDetailWindow(news);
+            detailWindow.Owner = Window.GetWindow(this);
+            detailWindow.ShowDialog();
+        }
+
     }
 }

@@ -1,10 +1,10 @@
 using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Services;
+using LemiCraft_Launcher.Windows;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
-using MessageBox = System.Windows.MessageBox;
 
 namespace LemiCraft_Launcher
 {
@@ -154,7 +154,7 @@ namespace LemiCraft_Launcher
                 mainWindow?.OpenLogsWindow();
             }
 
-            MessageBox.Show("Настройки сохранены", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            CustomMessageBox.ShowSuccess("Настройки сохранены");
         }
 
         private void SaveSettings()
@@ -175,27 +175,24 @@ namespace LemiCraft_Launcher
 
         private void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show(
-                "Вы уверены, что хотите сбросить все настройки?",
-                "Подтверждение",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question
+            var result = CustomMessageBox.ShowQuestion(
+                "Вы уверены, что хотите сбросить все настройки?"
             );
 
-            if (result == MessageBoxResult.Yes)
+            if (result == CustomMessageBox.MessageBoxResult.Yes)
             {
                 RamSlider.Value = 4;
                 JvmArgsBox.Text = "-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions";
                 JavaPathBox.Text = "Автоопределение";
                 GamePathBox.Text = System.IO.Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "minecraft"
+                    "LemiCraft"
                 );
                 LauncherBehaviorCombo.SelectedIndex = 0;
                 ShowLogsCheckBox.IsChecked = false;
                 AutoConnectCheckBox.IsChecked = false;
 
-                MessageBox.Show("Настройки сброшены", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                CustomMessageBox.ShowSuccess("Настройки сброшены");
             }
         }
     }

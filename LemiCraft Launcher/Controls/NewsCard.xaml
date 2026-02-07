@@ -1,0 +1,152 @@
+<UserControl x:Class="LemiCraft_Launcher.Controls.NewsCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Cursor="Hand">
+
+    <UserControl.Resources>
+        <Style x:Key="CategoryBadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="Height" Value="22"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="#1E293B" 
+            CornerRadius="12" 
+            Padding="0"
+            BorderBrush="#374151"
+            BorderThickness="1"
+            Margin="0,0,0,12">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="8" ShadowDepth="0" Opacity="0.1"/>
+        </Border.Effect>
+
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                    To="#22C55E"
+                                                    Duration="0:0:0.2"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                    To="#374151"
+                                                    Duration="0:0:0.2"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border x:Name="ImageContainer"
+                    Grid.Row="0"
+                    Height="140"
+                    CornerRadius="12,12,0,0"
+                    Visibility="Collapsed"
+                    Loaded="ImageContainer_Loaded"
+                    SizeChanged="ImageContainer_SizeChanged">
+
+                <Grid>
+                    <Image x:Name="NewsImage"
+                           Stretch="UniformToFill"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <Rectangle VerticalAlignment="Bottom"
+                               Height="25"
+                               IsHitTestVisible="False">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#001E293B" Offset="0"/>
+                                <GradientStop Color="#FF1E293B" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Padding="16">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Border x:Name="CategoryBadge"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource CategoryBadgeStyle}">
+                            <TextBlock x:Name="CategoryText"
+                                       Text="Общее"
+                                       FontSize="10"
+                                       FontWeight="Bold"
+                                       Foreground="White"/>
+                        </Border>
+
+                        <TextBlock x:Name="DateText"
+                                   Text="01.01.2024"
+                                   FontSize="11"
+                                   Foreground="#6B7280"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <TextBlock x:Name="TitleText"
+                               Text="Заголовок новости"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,8"
+                               MaxHeight="48"
+                               TextTrimming="CharacterEllipsis"/>
+
+                    <TextBlock x:Name="PreviewText"
+                               Text="Превью новости..."
+                               FontSize="13"
+                               Foreground="#9CA3AF"
+                               TextWrapping="Wrap"
+                               LineHeight="20"
+                               MaxHeight="60"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" 
+                    Background="#0F172A"
+                    CornerRadius="0,0,12,12"
+                    Padding="16,12"
+                    BorderBrush="#374151"
+                    BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="24" Height="24" 
+                            CornerRadius="12"
+                            Margin="0,0,8,0">
+                        <Border.Clip>
+                            <EllipseGeometry Center="12,12" RadiusX="12" RadiusY="12"/>
+                        </Border.Clip>
+                        <Image x:Name="AuthorAvatar"
+                               Stretch="UniformToFill"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+
+                    <TextBlock x:Name="AuthorText"
+                               Text="Автор"
+                               FontSize="12"
+                               Foreground="#9CA3AF"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

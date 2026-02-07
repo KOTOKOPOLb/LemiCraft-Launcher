@@ -9,7 +9,7 @@ namespace LemiCraft_Launcher.Services
         private static readonly string Dir =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
 
-        private static readonly string PathFile = System.IO.Path.Combine(Dir, "config.json");
+        private static readonly string PathFile = Path.Combine(Dir, "config.json");
 
         public static LauncherConfig Load()
         {

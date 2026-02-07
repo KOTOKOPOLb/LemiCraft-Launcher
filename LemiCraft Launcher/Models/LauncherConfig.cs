@@ -10,7 +10,7 @@ namespace LemiCraft_Launcher.Models
             "minecraft"
         );
 
-        public int LauncherBehavior { get; set; } = 0;
+        public int LauncherBehavior { get; set; } = 2;
 
         public bool ShowLogs { get; set; }
         public bool AutoConnect { get; set; }

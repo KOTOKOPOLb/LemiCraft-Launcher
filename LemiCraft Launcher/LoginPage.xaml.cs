@@ -5,8 +5,8 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using LemiCraft_Launcher.Windows;
 using Button = System.Windows.Controls.Button;
-using MessageBox = System.Windows.MessageBox;
 
 namespace LemiCraft_Launcher
 {
@@ -44,7 +44,7 @@ namespace LemiCraft_Launcher
         //TODO Доделать
         private void ShowCredentialsForm_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Будет в будущем...");
+            CustomMessageBox.ShowInformation("Будет в будущем...");
             return;
             var fadeOut = (Storyboard)Resources["FadeOutContent"];
             fadeOut.Completed += (s, args) =>
@@ -112,7 +112,7 @@ namespace LemiCraft_Launcher
                 {
                     var res = await AuthService.LoginElyByOAuthAsync(msg =>
                     {
-                        Dispatcher.Invoke(() => MessageBox.Show(msg, "Ely.by", MessageBoxButton.OK, MessageBoxImage.Information));
+                        Dispatcher.Invoke(() => CustomMessageBox.ShowSuccess(msg, "Ely.by"));
                     });
 
                     if (res.Success && res.Profile != null)
@@ -127,12 +127,12 @@ namespace LemiCraft_Launcher
                         }
                     }
                     else
-                        MessageBox.Show(res.ErrorMessage ?? "Ошибка", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                        CustomMessageBox.ShowError(res.ErrorMessage ?? "Ошибка");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowError($"Ошибка: {ex.Message}");
             }
             finally
             {
@@ -239,7 +239,7 @@ namespace LemiCraft_Launcher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.ShowError($"Ошибка: {ex.Message}");
             }
         }
     }

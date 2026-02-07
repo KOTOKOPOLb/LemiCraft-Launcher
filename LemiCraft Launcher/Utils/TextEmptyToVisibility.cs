@@ -13,9 +13,6 @@ namespace LemiCraft_Launcher.Utils
             return string.IsNullOrEmpty(s) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }
