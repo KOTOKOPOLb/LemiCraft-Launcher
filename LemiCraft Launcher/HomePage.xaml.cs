@@ -32,7 +32,41 @@ namespace LemiCraft_Launcher
             InitializeComponent();
             _ = UpdateServerStatus();
             _ = LoadNewsAsync();
+            _ = UpdateModpackDisplayAsync();
             Loaded += (s, e) => UpdateFades();
+        }
+
+        public async Task UpdateModpackDisplayAsync()
+        {
+            try
+            {
+                var installed = await ModpackVersionManager.GetInstalledModpackInfoAsync();
+                if (installed != null)
+                {
+                    ModpackStatus.Text = installed.Version;
+                    ModpackStatusIcon.Foreground = Brushes.LimeGreen;
+                }
+                else
+                {
+                    ModpackStatus.Text = "Не установлена";
+                    ModpackStatusIcon.Foreground = Brushes.Red;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка при получении версии модпака для UI: {ex.Message}");
+                ModpackStatus.Text = "Неизвестно";
+                ModpackStatusIcon.Foreground = Brushes.Red;
+            }
+        }
+
+        public void ShowModpackUpdateAvailable(string latestVersion)
+        {
+            if (string.IsNullOrEmpty(latestVersion))
+                return;
+
+            ModpackStatus.Text = $"Доступна {latestVersion}";
+            ModpackStatusIcon.Foreground = Brushes.Orange;
         }
 
         private void NewsScrollViewer_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
@@ -133,7 +167,7 @@ namespace LemiCraft_Launcher
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка загрузки новостей: {ex.Message}");
+                Debug.WriteLine($"Ошибка загрузки новостей: {ex.Message}");
                 EmptyNewsPanel.Visibility = Visibility.Visible;
             }
             finally

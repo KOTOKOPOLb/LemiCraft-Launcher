@@ -1,5 +1,3 @@
-using CmlLib.Core.Auth;
-using CmlLib.Core.Auth.Microsoft;
 using LemiCraft_Launcher.Services;
 using LemiCraft_Launcher.Windows;
 using LemiCraft_Launcher.Models;
@@ -15,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using Application = System.Windows.Application;
 using Color = System.Windows.Media.Color;
+using Point = System.Windows.Point;
 
 namespace LemiCraft_Launcher
 {
@@ -84,7 +83,11 @@ namespace LemiCraft_Launcher
         public void NavigateToHome()
         {
             if (!(MainFrame.Content is HomePage))
+            {
+                if (MainFrame.Content is LoginPage)
+                    HideOverlay();
                 MainFrame.Navigate(new HomePage());
+            }
         }
 
         private void UpdateFooterVisibility()
@@ -116,14 +119,122 @@ namespace LemiCraft_Launcher
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
+        private void ShowProgress(string message, double progress)
+        {
+            FooterProgressPanel.Visibility = Visibility.Visible;
+            FooterProgressText.Text = message;
+            FooterProgressBar.Value = progress;
+            FooterFilesText.Text = "";
+            FooterPercentText.Text = $"{progress:F0}%";
+        }
+
+        private void HideProgress()
+        {
+            FooterProgressPanel.Visibility = Visibility.Collapsed;
+        }
+
         public async void PlayButton_Click(object sender, RoutedEventArgs e)
         {
+            var profile = AuthService.LoadProfile();
+            if (profile == null)
+            {
+                MainFrame.Navigate(new LoginPage());
+                return;
+            }
+
+            AccountInfoPanel.IsEnabled = false;
+            SettingsButton.IsEnabled = false;
+            PlayButton.IsEnabled = false;
+
             var isInstalled = await MinecraftLauncherService.IsInstalledAsync();
 
             if (!isInstalled)
                 await InstallGameAsync();
             else
-                await LaunchGameAsync();
+            {
+                ShowProgress("Подготовка к запуску...", 0);
+
+                try
+                {
+                    await LaunchMinecraftAsync();
+                }
+                catch (Exception ex)
+                {
+                    HideProgress();
+                    CustomMessageBox.ShowError($"Ошибка запуска: {ex.Message}");
+                    PlayButton.IsEnabled = true;
+                    AccountInfoPanel.IsEnabled = true;
+                    SettingsButton.IsEnabled = true;
+                }
+            }
+        }
+
+        private async Task LaunchMinecraftAsync()
+        {
+            var config = ConfigService.Load();
+            var profile = AuthService.LoadProfile();
+
+            AccountInfoPanel.IsEnabled = false;
+            SettingsButton.IsEnabled = false;
+            PlayButton.IsEnabled = false;
+
+            var process = await MinecraftLauncherService.LaunchAsync(profile, config);
+
+            HideProgress();
+
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+
+            process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+            process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
+
+            if (_logsWindow != null)
+                _logsWindow.SetStatus("Запуск игры...", "#FFA500");
+
+            process.OutputDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    _logsWindow?.AppendLog(e.Data);
+            };
+
+            process.ErrorDataReceived += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(e.Data))
+                    _logsWindow?.AppendLog($"[ERROR] {e.Data}");
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            _logsWindow?.SetStatus("Игра запущена", "#22C55E");
+
+            FooterPlayButtonIcon.Text = "⏸️";
+            FooterPlayButtonText.Text = "Игра запущена";
+
+            _ = Task.Run(() =>
+            {
+                if (config.LauncherBehavior == 0)
+                    Dispatcher.Invoke(() => CloseButton_Click(null, new RoutedEventArgs()));
+                else if (config.LauncherBehavior == 1)
+                    Dispatcher.Invoke(() => WindowState = WindowState.Minimized);
+
+                process.WaitForExit();
+
+                Dispatcher.Invoke(() =>
+                {
+                    Show();
+                    WindowState = WindowState.Normal;
+                    FooterPlayButtonIcon.Text = "▶️";
+                    FooterPlayButtonText.Text = "Играть";
+                    PlayButton.IsEnabled = true;
+                    AccountInfoPanel.IsEnabled = true;
+                    SettingsButton.IsEnabled = true;
+                    _logsWindow?.SetStatus("Игра закрыта", "#EF4444");
+                });
+            });
         }
 
         private async Task InstallGameAsync()
@@ -173,98 +284,12 @@ namespace LemiCraft_Launcher
             }
         }
 
-        private async Task LaunchGameAsync()
-        {
-            var profile = AuthService.LoadProfile();
-            if (profile == null)
-            {
-                CustomMessageBox.ShowWarning("Сначала войдите в аккаунт!");
-                MainFrame.Navigate(new LoginPage());
-                return;
-            }
-
-            AccountInfoPanel.IsEnabled = false;
-            SettingsButton.IsEnabled = false;
-            PlayButton.IsEnabled = false;
-
-            FooterPlayButtonIcon.Text = "🎮";
-            FooterPlayButtonText.Text = "Запуск...";
-
-            try
-            {
-                var config = ConfigService.Load();
-                var process = await MinecraftLauncherService.LaunchAsync(profile, config);
-
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-
-                process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-                process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-
-                if (_logsWindow != null)
-                    _logsWindow.SetStatus("Запуск игры...", "#FFA500");
-
-                process.OutputDataReceived += (s, e) =>
-                {
-                    if (!string.IsNullOrEmpty(e.Data))
-                        _logsWindow?.AppendLog(e.Data);
-                };
-
-                process.ErrorDataReceived += (s, e) =>
-                {
-                    if (!string.IsNullOrEmpty(e.Data))
-                        _logsWindow?.AppendLog($"[ERROR] {e.Data}");
-                };
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                _logsWindow?.SetStatus("Игра запущена", "#22C55E");
-
-                FooterPlayButtonIcon.Text = "⏸️";
-                FooterPlayButtonText.Text = "Игра запущена";
-
-                _ = Task.Run(() =>
-                {
-                    if (config.LauncherBehavior == 1)
-                        Dispatcher.Invoke(() => CloseButton_Click(null, null));
-                    else if (config.LauncherBehavior == 2)
-                        Dispatcher.Invoke(() => Hide());
-
-                    process.WaitForExit();
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        Show();
-                        FooterPlayButtonIcon.Text = "▶️";
-                        FooterPlayButtonText.Text = "Играть";
-                        PlayButton.IsEnabled = true;
-                        AccountInfoPanel.IsEnabled = true;
-                        SettingsButton.IsEnabled = true;
-                        _logsWindow?.SetStatus("Игра закрыта", "#EF4444");
-                    });
-                });
-            }
-            catch (Exception ex)
-            {
-                CustomMessageBox.ShowError($"Ошибка запуска:\n{ex.Message}");
-                FooterPlayButtonIcon.Text = "▶️";
-                FooterPlayButtonText.Text = "Играть";
-                PlayButton.IsEnabled = true;
-                AccountInfoPanel.Visibility = Visibility.Visible;
-                SettingsButton.IsEnabled = true;
-            }
-        }
-
         public void AccountInfo_Click(object sender, MouseButtonEventArgs e)
         {
-            if (PlayButton.IsEnabled)
+            var profile = AuthService.LoadProfile();
+            if (profile != null && PlayButton.IsEnabled)
                 ShowAccountMenu();
             else
-                if (!(MainFrame.Content is LoginPage))
                 MainFrame.Navigate(new LoginPage());
         }
 
@@ -336,7 +361,7 @@ namespace LemiCraft_Launcher
                 PlayButton.IsEnabled = false;
             }
         }
-        
+
         public async Task LoadUserAvatarAsync(string username)
         {
             try
@@ -364,13 +389,13 @@ namespace LemiCraft_Launcher
                 Debug.WriteLine($"Ошибка загрузки аватара: {ex.Message}");
             }
         }
-        
+
         private void ResetAvatar()
         {
             PlayerAvatar.Background = new SolidColorBrush(Color.FromRgb(55, 65, 81));
             PlayerAvatarEmoji.Visibility = Visibility.Visible;
         }
-        
+
         public void OpenLogsWindow()
         {
             if (_logsWindow == null)
@@ -407,6 +432,11 @@ namespace LemiCraft_Launcher
                     PlayButton.Tag = result.ModpackVersion;
                     PlayButton.Click -= PlayButton_Click;
                     PlayButton.Click += UpdateModpack_Click;
+                    if (MainFrame.Content is HomePage home)
+                    {
+                        var latest = result.ModpackVersion.Version;
+                        Dispatcher.Invoke(() => home.ShowModpackUpdateAvailable(latest));
+                    }
                 }
             }
             catch (Exception ex)
@@ -433,6 +463,8 @@ namespace LemiCraft_Launcher
                     PlayButton.Tag = null;
                     PlayButton.Click -= UpdateModpack_Click;
                     PlayButton.Click += PlayButton_Click;
+                    if (MainFrame.Content is HomePage home)
+                        _ = home.UpdateModpackDisplayAsync();
                 }
             }
         }
@@ -452,6 +484,41 @@ namespace LemiCraft_Launcher
             }
 
             Application.Current.Shutdown();
+        }
+
+        public void ShowOverlay(bool withLoader = false)
+        {
+            Overlay.Visibility = Visibility.Visible;
+            Overlay.Opacity = 0;
+
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+            Overlay.BeginAnimation(OpacityProperty, fadeIn);
+
+            LoaderCanvas.Visibility = withLoader ? Visibility.Visible : Visibility.Collapsed;
+
+            if (withLoader)
+            {
+                var rotate = new RotateTransform();
+                LoaderCanvas.RenderTransform = rotate;
+                LoaderCanvas.RenderTransformOrigin = new Point(0.5, 0.5);
+
+                var animation = new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(1)))
+                {
+                    RepeatBehavior = RepeatBehavior.Forever
+                };
+                rotate.BeginAnimation(RotateTransform.AngleProperty, animation);
+            }
+        }
+
+        public void HideOverlay()
+        {
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+            fadeOut.Completed += (s, _) =>
+            {
+                Overlay.Visibility = Visibility.Collapsed;
+                LoaderCanvas.Visibility = Visibility.Collapsed;
+            };
+            Overlay.BeginAnimation(OpacityProperty, fadeOut);
         }
     }
 }

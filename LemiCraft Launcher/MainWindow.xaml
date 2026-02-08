@@ -226,6 +226,33 @@
                    Background="Transparent"
                    Navigated="MainFrame_Navigated"/>
 
+            <Border x:Name="Overlay"
+                    Grid.Row="1"
+                    Grid.RowSpan="2"
+                    Background="#CC0F172A"
+                    Opacity="0"
+                    Visibility="Collapsed"
+                    IsHitTestVisible="True">
+                <Border.RenderTransform>
+                    <TranslateTransform Y="0"/>
+                </Border.RenderTransform>
+                <Grid>
+                    <Canvas x:Name="LoaderCanvas"
+                            Width="80" 
+                            Height="80" 
+                            Visibility="Collapsed" 
+                            HorizontalAlignment="Center" 
+                            VerticalAlignment="Center">
+                        <Ellipse Width="80" 
+                                 Height="80" 
+                                 Stroke="#22C55E" 
+                                 StrokeThickness="6" 
+                                 StrokeDashArray="10" 
+                                 StrokeStartLineCap="Round"/>
+                    </Canvas>
+                </Grid>
+            </Border>
+
             <Border x:Name="Footer" Grid.Row="2" Background="#1E293B" CornerRadius="0,0,16,16">
                 <Grid Margin="30,0" Height="90">
                     <Grid.ColumnDefinitions>

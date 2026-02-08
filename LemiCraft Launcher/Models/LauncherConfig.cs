@@ -7,7 +7,7 @@ namespace LemiCraft_Launcher.Models
         public string JavaPath { get; set; } = "Автоопределение";
         public string GamePath { get; set; } = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "minecraft"
+            "LemiCraft"
         );
 
         public int LauncherBehavior { get; set; } = 2;

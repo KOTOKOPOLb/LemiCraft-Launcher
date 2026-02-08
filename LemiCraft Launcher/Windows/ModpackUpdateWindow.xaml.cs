@@ -10,8 +10,8 @@ namespace LemiCraft_Launcher.Windows
     public partial class ModpackUpdateWindow : Window
     {
         private readonly ModpackVersion _version;
-        private bool _isUpdating = false;
-        public bool UpdateSuccessful { get; private set; } = false;
+        private bool _isUpdating;
+        public bool UpdateSuccessful { get; private set; }
 
         public ModpackUpdateWindow(ModpackVersion version)
         {
@@ -124,6 +124,19 @@ namespace LemiCraft_Launcher.Windows
 
         private void ModsOnlyOption_Click(object sender, MouseButtonEventArgs e) => ModsOnlyRadio.IsChecked = true;
 
+        private void UpdateTypeChanged(object sender, RoutedEventArgs e)
+        {
+            if (FullUpdateCheckMark != null)
+                FullUpdateCheckMark.Visibility = FullUpdateRadio?.IsChecked ?? false ? Visibility.Visible : Visibility.Collapsed;
+
+            if (ModsAndResourcesCheckMark != null)
+                ModsAndResourcesCheckMark.Visibility = ModsAndResourcesRadio?.IsChecked ?? false ? Visibility.Visible : Visibility.Collapsed;
+
+            if (ModsOnlyCheckMark != null)
+                ModsOnlyCheckMark.Visibility = ModsOnlyRadio?.IsChecked ?? false ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+
         private async void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isUpdating) return;
@@ -142,17 +155,23 @@ namespace LemiCraft_Launcher.Windows
             CloseButtonTop.IsEnabled = false;
             ProgressPanel.Visibility = Visibility.Visible;
 
+            if (FullUpdateRadio.IsChecked != true)
+                FadeOutAndCollapse(FullUpdateCard);
+
+            if (ModsAndResourcesRadio.IsChecked != true)
+                FadeOutAndCollapse(ModsAndResourcesCard);
+
+            if (ModsOnlyRadio.IsChecked != true)
+                FadeOutAndCollapse(ModsOnlyCard);
+
             ProgressPanel.Opacity = 0;
             var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
             ProgressPanel.BeginAnimation(OpacityProperty, fadeIn);
 
             var progress = new Progress<(string task, double progress)>(value =>
             {
-                Dispatcher.Invoke(() =>
-                {
-                    ProgressText.Text = value.task;
-                    UpdateProgress.Value = value.progress;
-                });
+                ProgressText.Text = value.task;
+                UpdateProgress.Value = value.progress;
             });
 
             try
@@ -162,19 +181,13 @@ namespace LemiCraft_Launcher.Windows
                 if (result)
                 {
                     UpdateSuccessful = true;
-
                     await Task.Delay(500);
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        CustomMessageBox.ShowSuccess("Обновление успешно установлено!");
-                        CloseWithAnimation();
-                    });
+                    CustomMessageBox.ShowSuccess("Обновление успешно установлено!");
+                    CloseWithAnimation();
                 }
                 else
                 {
-                    CustomMessageBox.ShowError("Не удалось установить обновление.\nПроверьте подключение к интернету.");
-
+                    CustomMessageBox.ShowError("Не удалось установить обновление.\nПроверьте подключение к интернету");
                     UpdateButton.IsEnabled = true;
                     CancelButton.IsEnabled = true;
                     CloseButtonTop.IsEnabled = true;
@@ -192,6 +205,20 @@ namespace LemiCraft_Launcher.Windows
                 ProgressPanel.Visibility = Visibility.Collapsed;
                 _isUpdating = false;
             }
+        }
+
+        private void FadeOutAndCollapse(UIElement element, int durationMs = 200)
+        {
+            if (element == null) return;
+
+            var anim = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(durationMs));
+            anim.Completed += (_, __) =>
+            {
+                element.Visibility = Visibility.Collapsed;
+                element.Opacity = 1;
+            };
+
+            element.BeginAnimation(OpacityProperty, anim);
         }
     }
 }

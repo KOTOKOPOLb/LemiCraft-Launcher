@@ -1,15 +1,17 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
 
 namespace LemiCraft_Launcher.Services
 {
     public static class ModpackVersionManager
     {
-        private static readonly string VersionFilePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "LemiCraft",
-            "modpack-version.json"
-        );
+        private static string GetVersionFilePath()
+        {
+            var config = ConfigService.Load();
+            var gameDir = config.GamePath;
+            return Path.Combine(gameDir, "modpack-version.json");
+        }
 
         public class ModpackVersion
         {
@@ -23,17 +25,25 @@ namespace LemiCraft_Launcher.Services
         {
             try
             {
-                if (!File.Exists(VersionFilePath))
-                    return "0.0.0";
+                var versionFilePath = GetVersionFilePath();
 
-                var json = await File.ReadAllTextAsync(VersionFilePath);
+                if (!File.Exists(versionFilePath))
+                {
+                    Debug.WriteLine($"Файл версии модпака не найден: {versionFilePath}");
+                    return "0.0.0";
+                }
+
+                var json = await File.ReadAllTextAsync(versionFilePath);
                 var version = JsonSerializer.Deserialize<ModpackVersion>(json);
 
-                return version?.Version ?? "0.0.0";
+                var versionString = version?.Version ?? "0.0.0";
+                Debug.WriteLine($"Установленная версия модпака: {versionString}");
+
+                return versionString;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка чтения версии модпака: {ex.Message}");
+                Debug.WriteLine($"Ошибка чтения версии модпака: {ex.Message}");
                 return "0.0.0";
             }
         }
@@ -42,8 +52,10 @@ namespace LemiCraft_Launcher.Services
         {
             try
             {
-                var dir = Path.GetDirectoryName(VersionFilePath);
-                if (!Directory.Exists(dir))
+                var versionFilePath = GetVersionFilePath();
+                var dir = Path.GetDirectoryName(versionFilePath);
+
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
 
                 var versionInfo = new ModpackVersion
@@ -59,13 +71,13 @@ namespace LemiCraft_Launcher.Services
                     WriteIndented = true
                 });
 
-                await File.WriteAllTextAsync(VersionFilePath, json);
+                await File.WriteAllTextAsync(versionFilePath, json);
 
-                System.Diagnostics.Debug.WriteLine($"Версия модпака сохранена: {version}");
+                Debug.WriteLine($"Версия модпака сохранена: {version} в {versionFilePath}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка сохранения версии модпака: {ex.Message}");
+                Debug.WriteLine($"Ошибка сохранения версии модпака: {ex.Message}");
             }
         }
 
@@ -73,10 +85,12 @@ namespace LemiCraft_Launcher.Services
         {
             try
             {
-                if (!File.Exists(VersionFilePath))
+                var versionFilePath = GetVersionFilePath();
+
+                if (!File.Exists(versionFilePath))
                     return null;
 
-                var json = await File.ReadAllTextAsync(VersionFilePath);
+                var json = await File.ReadAllTextAsync(versionFilePath);
                 return JsonSerializer.Deserialize<ModpackVersion>(json);
             }
             catch

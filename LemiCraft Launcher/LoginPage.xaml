@@ -425,48 +425,5 @@
                 </StackPanel>
             </Grid>
         </Border>
-        <Grid x:Name="LoadingOverlay"
-              Visibility="Collapsed"
-              Background="#80000000"
-              Panel.ZIndex="999"
-              Grid.Row="1"
-              HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <Viewbox Width="64" Height="64" HorizontalAlignment="Center">
-                    <Canvas Width="100" Height="100">
-                        <Path Stroke="White" 
-                              StrokeThickness="8" 
-                              StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round"
-                              Data="M 50,10 A 40,40 0 1,1 50,90">
-                            <Path.RenderTransform>
-                                <RotateTransform x:Name="LoaderRotation" CenterX="50" CenterY="50"/>
-                            </Path.RenderTransform>
-                            <Path.Triggers>
-                                <EventTrigger RoutedEvent="Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard RepeatBehavior="Forever">
-                                            <DoubleAnimation Storyboard.TargetName="LoaderRotation"
-                                                             Storyboard.TargetProperty="Angle"
-                                                             From="0" To="360"
-                                                             Duration="0:0:1.2"
-                                                             AccelerationRatio="0.3"
-                                                             DecelerationRatio="0.3"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </Path.Triggers>
-                        </Path>
-                    </Canvas>
-                </Viewbox>
-                <TextBlock Text="Авторизация..." 
-                           FontSize="20" 
-                           Foreground="White"
-                           FontWeight="SemiBold"
-                           Margin="0,20,0,0"
-                           HorizontalAlignment="Center"/>
-            </StackPanel>
-        </Grid>
     </Grid>
 </Page>

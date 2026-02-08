@@ -1,6 +1,7 @@
 using LemiCraft_Launcher.Models;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -10,9 +11,11 @@ namespace LemiCraft_Launcher.Services
     public static class UpdateService
     {
         private static readonly HttpClient _httpClient = new();
-        private static readonly string DataDir =
+        private static string GetDataDir() =>
+            Path.GetDirectoryName(ConfigService.Load().GamePath) ??
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
-        private static readonly string VersionFilePath = Path.Combine(DataDir, "version.json");
+
+        private static string VersionFilePath => Path.Combine(GetDataDir(), "version.json");
 
         private static string GetApiUrl(string endpoint) =>
             $"{ConfigService.Load().ApiBaseUrl}/launcher/{endpoint}";
@@ -91,8 +94,8 @@ namespace LemiCraft_Launcher.Services
 
                 Debug.WriteLine("Requesting: " + url);
                 var apiResponse = JsonSerializer.Deserialize<ModpackApiResponse>(response, JsonOptions);
-                Debug.WriteLine("ApiResponse: " + apiResponse);
                 Debug.WriteLine("Response: " + response);
+
                 if (apiResponse == null || !apiResponse.Success)
                 {
                     Debug.WriteLine("API modpack вернул success=false");
@@ -119,90 +122,87 @@ namespace LemiCraft_Launcher.Services
         {
             try
             {
-                var tempPath = Path.Combine(Path.GetTempPath(), "LemiCraft_Launcher_Update.exe");
+                var currentExePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                var currentExeDir = Path.GetDirectoryName(currentExePath) ?? "";
+                var newExePath = Path.Combine(currentExeDir, "LemiCraft Launcher_new.exe");
+                var oldExePath = Path.Combine(currentExeDir, "LemiCraft Launcher_old.exe");
 
-                using var response = await _httpClient.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
-                response.EnsureSuccessStatusCode();
+                progress?.Report(0);
 
-                var totalBytes = response.Content.Headers.ContentLength ?? 0;
-                var downloadedBytes = 0L;
-
-                using var contentStream = await response.Content.ReadAsStreamAsync();
-                using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-                var buffer = new byte[8192];
-                int bytesRead;
-
-                while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                using (var response = await _httpClient.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
-                    await fileStream.WriteAsync(buffer, 0, bytesRead);
-                    downloadedBytes += bytesRead;
+                    response.EnsureSuccessStatusCode();
+                    var totalBytes = response.Content.Headers.ContentLength ?? 0;
+                    var downloadedBytes = 0L;
 
-                    if (totalBytes > 0)
-                        progress?.Report((double)downloadedBytes / totalBytes * 100);
-                }
+                    using var contentStream = await response.Content.ReadAsStreamAsync();
+                    using var fileStream = new FileStream(newExePath, FileMode.Create, FileAccess.Write, FileShare.None);
 
-                if (!string.IsNullOrEmpty(version.Sha256Hash))
-                {
-                    var hash = await ComputeSha256Async(tempPath);
-                    if (!hash.Equals(version.Sha256Hash, StringComparison.OrdinalIgnoreCase))
+                    var buffer = new byte[81920];
+                    int bytesRead;
+
+                    while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
                     {
-                        File.Delete(tempPath);
-                        return false;
+                        await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
+                        downloadedBytes += bytesRead;
+
+                        if (totalBytes > 0)
+                            progress?.Report((double)downloadedBytes / totalBytes * 100);
                     }
                 }
 
-                StartUpdate(tempPath);
+                progress?.Report(100);
+
+                var batchPath = Path.Combine(Path.GetTempPath(), "update_launcher.bat");
+                var batchContent = $@"@echo off
+timeout /t 1 /nobreak > nul
+del ""{currentExePath.Replace(".dll", ".exe")}"" > nul 2>&1
+move /y ""{newExePath}"" ""{currentExePath.Replace(".dll", ".exe")}"" > nul 2>&1
+start """" ""{currentExePath.Replace(".dll", ".exe")}""
+del ""{batchPath}""
+";
+
+                await File.WriteAllTextAsync(batchPath, batchContent);
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = batchPath,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                Process.Start(psi);
+                System.Windows.Application.Current.Shutdown();
+
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Ошибка загрузки обновления лаунчера: {ex.Message}");
                 return false;
             }
         }
 
-        private static void StartUpdate(string updateFilePath)
-        {
-            var currentExe = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-            var batchPath = Path.Combine(Path.GetTempPath(), "update.bat");
-
-            var batchContent =
-$@"@echo off
-timeout /t 2 /nobreak > nul
-del ""{currentExe}""
-move /y ""{updateFilePath}"" ""{currentExe}""
-start """" ""{currentExe}""
-del ""{batchPath}""
-";
-
-            File.WriteAllText(batchPath, batchContent);
-
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = batchPath,
-                CreateNoWindow = true,
-                UseShellExecute = false
-            });
-
-            Environment.Exit(0);
-        }
-
         public static async Task<bool> UpdateModpackAsync(
-            ModpackVersion version, 
-            ModpackUpdateType updateType, 
+            ModpackVersion version,
+            ModpackUpdateType updateType,
             IProgress<(string task, double progress)>? progress = null)
         {
             try
             {
-                var gameDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "LemiCraft"
-                );
+                var config = ConfigService.Load();
+                var gameDir = config.GamePath;
 
-                var driveInfo = new DriveInfo(Path.GetPathRoot(gameDir));
-                if (driveInfo.AvailableFreeSpace < version.FileSizes.Values.FirstOrDefault())
+                Debug.WriteLine($"Обновление модпака в: {gameDir}");
+                Debug.WriteLine($"Тип обновления: {updateType}");
+
+                var driveInfo = new DriveInfo(Path.GetPathRoot(gameDir)!);
+                var requiredSpace = version.FileSizes.Values.FirstOrDefault();
+
+                if (driveInfo.AvailableFreeSpace < requiredSpace)
                 {
                     progress?.Report(("Недостаточно места на диске!", 0));
+                    Debug.WriteLine($"Недостаточно места: нужно {requiredSpace / (1024 * 1024)} MB, доступно {driveInfo.AvailableFreeSpace / (1024 * 1024)} MB");
                     return false;
                 }
 
@@ -210,7 +210,9 @@ del ""{batchPath}""
 
                 var downloadUrl = version.DownloadUrl.StartsWith("http")
                     ? version.DownloadUrl
-                    : $"{ConfigService.Load().ApiBaseUrl.Replace("/api", "")}{version.DownloadUrl}";
+                    : $"{config.ApiBaseUrl.Replace("/api", "")}{version.DownloadUrl}";
+
+                Debug.WriteLine($"Скачивание с: {downloadUrl}");
 
                 var tempZip = Path.Combine(Path.GetTempPath(), $"modpack_{DateTime.Now:yyyyMMddHHmmss}.zip");
 
@@ -234,7 +236,10 @@ del ""{batchPath}""
                         downloadedBytes += bytesRead;
 
                         if (totalBytes > 0)
-                            progress?.Report(("Скачивание...", (double)downloadedBytes / totalBytes * 50));
+                        {
+                            var downloadProgress = (double)downloadedBytes / totalBytes * 50;
+                            progress?.Report(("Скачивание...", downloadProgress));
+                        }
                     }
                 }
 
@@ -242,6 +247,7 @@ del ""{batchPath}""
 
                 if (updateType == ModpackUpdateType.Full)
                 {
+                    Debug.WriteLine("Создание бэкапа...");
                     var backupDir = Path.Combine(gameDir, "backups", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
                     Directory.CreateDirectory(backupDir);
 
@@ -260,34 +266,88 @@ del ""{batchPath}""
                 {
                     try
                     {
-                        using var archive = System.IO.Compression.ZipFile.OpenRead(tempZip);
+                        using var archive = ZipFile.OpenRead(tempZip);
                         archive.Dispose();
                     }
                     catch (InvalidDataException)
                     {
                         throw new Exception("Загруженный файл поврежден");
                     }
+                });
 
-                    System.IO.Compression.ZipFile.ExtractToDirectory(tempZip, gameDir, true);
+                progress?.Report(("Распаковка файлов...", 60));
+
+                await Task.Run(() =>
+                {
+                    using var archive = ZipFile.OpenRead(tempZip);
+                    var totalEntries = archive.Entries.Count;
+                    var processedEntries = 0;
+
+                    foreach (var entry in archive.Entries)
+                    {
+                        var shouldExtract = ShouldExtractEntry(entry.FullName, updateType);
+
+                        if (shouldExtract)
+                        {
+                            var destinationPath = Path.Combine(gameDir, entry.FullName);
+
+                            if (string.IsNullOrEmpty(entry.Name))
+                                Directory.CreateDirectory(destinationPath);
+                            else
+                            {
+                                Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
+                                entry.ExtractToFile(destinationPath, true);
+                            }
+                        }
+
+                        processedEntries++;
+                        var extractProgress = 60 + (processedEntries * 35.0 / totalEntries);
+                        progress?.Report(($"Распаковка: {entry.Name}", extractProgress));
+                    }
                 });
 
                 progress?.Report(("Обновление завершено!", 100));
 
                 await ModpackVersionManager.SaveInstalledVersionAsync(
                     version.Version,
-                    version.DownloadUrl,
-                    version.FileSizes.Values.FirstOrDefault()
+                    Path.GetFileName(downloadUrl),
+                    requiredSpace
                 );
 
                 try { File.Delete(tempZip); } catch { }
 
+                Debug.WriteLine("Модпак успешно обновлен!");
                 return true;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка обновления модпака: {ex.Message}");
+                Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 progress?.Report(($"Ошибка: {ex.Message}", 0));
                 return false;
+            }
+        }
+
+        private static bool ShouldExtractEntry(string entryPath, ModpackUpdateType updateType)
+        {
+            var normalizedPath = entryPath.Replace('\\', '/').ToLowerInvariant();
+
+            switch (updateType)
+            {
+                case ModpackUpdateType.ModsOnly:
+                    return normalizedPath.StartsWith("mods/");
+
+                case ModpackUpdateType.ModsAndResources:
+                    return normalizedPath.StartsWith("mods/") ||
+                           normalizedPath.StartsWith("resourcepacks/") ||
+                           normalizedPath.StartsWith("shaderpacks/");
+
+                case ModpackUpdateType.Full:
+                default:
+                    return !normalizedPath.StartsWith("backups/") &&
+                           !normalizedPath.Contains("/saves/") &&
+                           normalizedPath != "options.txt" &&
+                           normalizedPath != "servers.dat";
             }
         }
 
@@ -365,18 +425,18 @@ del ""{batchPath}""
             }
         }
 
-        private static void SaveLocalVersion(LocalVersionInfo version)
+        public static void SaveLocalVersion(LocalVersionInfo version)
         {
-            Directory.CreateDirectory(DataDir);
-            var json = JsonSerializer.Serialize(version, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(VersionFilePath, json);
-        }
-
-        public static void SetModpackVersion(string version)
-        {
-            var localVersion = LoadLocalVersion();
-            localVersion.ModpackVersion = version;
-            SaveLocalVersion(localVersion);
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(VersionFilePath)!);
+                var json = JsonSerializer.Serialize(version, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(VersionFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Ошибка сохранения версии: {ex.Message}");
+            }
         }
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -393,52 +453,42 @@ del ""{batchPath}""
             public List<string> Changelog { get; set; } = new();
             public bool IsRequired { get; set; }
             public long FileSize { get; set; }
-            public string FileName { get; set; } = "";
 
-            public LauncherVersion ToLauncherVersion()
+            public LauncherVersion ToLauncherVersion() => new()
             {
-                return new LauncherVersion
-                {
-                    Version = Version,
-                    ReleaseDate = ReleaseDate,
-                    DownloadUrl = DownloadUrl,
-                    Changelog = Changelog,
-                    IsRequired = IsRequired,
-                    FileSize = FileSize,
-                    Sha256Hash = ""
-                };
-            }
+                Version = Version,
+                ReleaseDate = ReleaseDate,
+                DownloadUrl = DownloadUrl,
+                Changelog = Changelog,
+                IsRequired = IsRequired,
+                FileSize = FileSize
+            };
         }
 
         private class ModpackApiResponse
         {
             public bool Success { get; set; }
             public string Version { get; set; } = "";
-            public string FileName { get; set; } = "";
             public string DownloadUrl { get; set; } = "";
             public long FileSize { get; set; }
-            public DateTime ReleaseDate { get; set; }
             public string Minecraft { get; set; } = "";
             public string Fabric { get; set; } = "";
             public List<string> Changelog { get; set; } = new();
 
-            public ModpackVersion ToModpackVersion()
+            public ModpackVersion ToModpackVersion() => new()
             {
-                return new ModpackVersion
+                Version = Version,
+                DownloadUrl = DownloadUrl,
+                MinecraftVersion = Minecraft,
+                FabricVersion = Fabric,
+                Changelog = Changelog,
+                FileSizes = new Dictionary<string, long>
                 {
-                    Version = Version,
-                    ReleaseDate = ReleaseDate,
-                    MinecraftVersion = Minecraft,
-                    FabricVersion = Fabric,
-                    Changelog = Changelog,
-                    DownloadUrl = DownloadUrl,
-                    FileSizes = new Dictionary<string, long>
-                    {
-                        { "full", FileSize }
-                    },
-                    UpdateType = ModpackUpdateType.Full
-                };
-            }
+                    { "full", FileSize },
+                    { "mods", (long)(FileSize * 0.6) },
+                    { "mods_resources", (long)(FileSize * 0.8) }
+                }
+            };
         }
     }
 }

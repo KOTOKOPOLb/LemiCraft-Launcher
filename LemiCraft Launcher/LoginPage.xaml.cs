@@ -77,7 +77,8 @@ namespace LemiCraft_Launcher
 
         private async void BrowserLogin_Click(object sender, RoutedEventArgs e)
         {
-            LoadingOverlay.Visibility = Visibility.Visible;
+            var mainWindow = Window.GetWindow(this) as MainWindow;
+            mainWindow?.ShowOverlay(true);
 
             try
             {
@@ -99,7 +100,6 @@ namespace LemiCraft_Launcher
 
                         AuthService.SaveProfile(profile);
 
-                        var mainWindow = Window.GetWindow(this) as MainWindow;
                         if (mainWindow != null)
                         {
                             mainWindow.UpdateAccountInfo(session.Username, true);
@@ -118,7 +118,6 @@ namespace LemiCraft_Launcher
                     if (res.Success && res.Profile != null)
                     {
                         AuthService.SaveProfile(res.Profile);
-                        var mainWindow = Window.GetWindow(this) as MainWindow;
                         if (mainWindow != null)
                         {
                             mainWindow.UpdateAccountInfo(res.Profile.Username, true);
@@ -136,7 +135,7 @@ namespace LemiCraft_Launcher
             }
             finally
             {
-                LoadingOverlay.Visibility = Visibility.Collapsed;
+                mainWindow?.HideOverlay();
             }
         }
 
@@ -203,6 +202,7 @@ namespace LemiCraft_Launcher
                 SetControlsEnabled(true);
             }
         }
+        
         private void ShowError(string message)
         {
             ErrorText.Text = message;

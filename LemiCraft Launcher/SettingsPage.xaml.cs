@@ -1,6 +1,7 @@
 using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Services;
 using LemiCraft_Launcher.Windows;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -104,7 +105,7 @@ namespace LemiCraft_Launcher
             }
             catch
             {
-                return 4;
+                return 16;
             }
         }
 
@@ -132,21 +133,48 @@ namespace LemiCraft_Launcher
             var dialog = new FolderBrowserDialog
             {
                 Description = "Выберите папку для установки игры",
-                ShowNewFolderButton = true
+                ShowNewFolderButton = true,
+                SelectedPath = GamePathBox.Text
             };
 
             if (dialog.ShowDialog() == DialogResult.OK)
-                GamePathBox.Text = dialog.SelectedPath;
+            {
+                var selectedPath = dialog.SelectedPath;
+
+                var result = CustomMessageBox.ShowQuestion(
+                    "Вы уверены что хотите изменить путь установки игры?\n\n" +
+                    $"Новый путь: {selectedPath}\n\n" +
+                    "ВНИМАНИЕ: Уже установленные файлы НЕ будут перенесены автоматически!"
+                );
+
+                if (result == CustomMessageBox.MessageBoxResult.Yes)
+                {
+                    GamePathBox.Text = selectedPath;
+                }
+            }
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             var oldConfig = ConfigService.Load();
             var oldShowLogs = oldConfig.ShowLogs;
+            var oldGamePath = oldConfig.GamePath;
 
             SaveSettings();
 
             var newConfig = ConfigService.Load();
+            var newGamePath = newConfig.GamePath;
+
+            if (oldGamePath != newGamePath)
+            {
+                MinecraftLauncherService.ResetLauncherCache();
+
+                CustomMessageBox.ShowInformation(
+                    "Путь установки игры изменен!\n\n" +
+                    $"Новый путь: {newGamePath}\n\n" +
+                    "Если игра уже была установлена, её нужно установить заново."
+                );
+            }
 
             if (!oldShowLogs && newConfig.ShowLogs)
             {
@@ -154,7 +182,8 @@ namespace LemiCraft_Launcher
                 mainWindow?.OpenLogsWindow();
             }
 
-            CustomMessageBox.ShowSuccess("Настройки сохранены");
+            var mainWindow2 = Window.GetWindow(this) as MainWindow;
+            mainWindow2?.NavigateToHome();
         }
 
         private void SaveSettings()
@@ -184,11 +213,13 @@ namespace LemiCraft_Launcher
                 RamSlider.Value = 4;
                 JvmArgsBox.Text = "-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions";
                 JavaPathBox.Text = "Автоопределение";
-                GamePathBox.Text = System.IO.Path.Combine(
+
+                GamePathBox.Text = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     "LemiCraft"
                 );
-                LauncherBehaviorCombo.SelectedIndex = 0;
+
+                LauncherBehaviorCombo.SelectedIndex = 2;
                 ShowLogsCheckBox.IsChecked = false;
                 AutoConnectCheckBox.IsChecked = false;
 
