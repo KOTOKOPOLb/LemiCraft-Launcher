@@ -25,6 +25,7 @@
     <PublishTrimmed>false</PublishTrimmed>
     <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
     <PublishDir>publish\</PublishDir>
+    <AssemblyName>LemiCraft_Launcher</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -56,5 +57,4 @@
   <Target Name="BuildInstaller" AfterTargets="Publish">
     <Exec Command="&quot;C:\Users\Home\AppData\Local\Programs\Inno Setup 6\ISCC.exe&quot; &quot;$(SolutionDir)installer\LemiCraft.iss&quot; /DAppVersion=$(Version)" />
   </Target>
-
 </Project>
