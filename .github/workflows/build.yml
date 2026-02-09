@@ -1,0 +1,209 @@
+name: Build and Release
+
+on:
+  #push:
+  #  branches: [ main ]
+  #  tags:
+  #    - 'v*'
+  #pull_request:
+  #  branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: 'LemiCraft Launcher/LemiCraft Launcher.csproj'
+  
+jobs:
+  # ================================================
+  # Build Application
+  # ================================================
+  build:
+    name: Build Application
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Get version from tag
+      id: get_version
+      shell: pwsh
+      run: |
+        $version = "1.0.0"
+        if ($env:GITHUB_REF -match 'refs/tags/v(.+)') {
+          $version = $matches[1]
+        } elseif ($env:GITHUB_REF -match 'refs/heads/(.+)') {
+          $branch = $matches[1]
+          $version = "1.0.0-$branch.$env:GITHUB_RUN_NUMBER"
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "Building version: $version"
+    
+    - name: Restore dependencies
+      run: dotnet restore "${{ env.PROJECT_PATH }}"
+    
+    - name: Build application
+      run: |
+        dotnet publish "${{ env.PROJECT_PATH }}" `
+          -c Release `
+          -r win-x64 `
+          /p:PublishSingleFile=true `
+          /p:SelfContained=true `
+          /p:IncludeAllContentForSelfExtract=true `
+          /p:PublishTrimmed=false `
+          /p:EnableCompressionInSingleFile=false `
+          /p:Version=${{ steps.get_version.outputs.VERSION }} `
+          -o "LemiCraft Launcher/publish"
+    
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: lemicraft-launcher-${{ steps.get_version.outputs.VERSION }}
+        path: LemiCraft Launcher/publish/
+        retention-days: 30
+    
+  # ================================================
+  # Build Installer
+  # ================================================
+  installer:
+    name: Build Installer
+    needs: build
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: lemicraft-launcher-${{ needs.build.outputs.VERSION }}
+        path: LemiCraft Launcher/publish/
+    
+    - name: Get version
+      id: get_version
+      shell: pwsh
+      run: |
+        $version = "1.0.0"
+        if ($env:GITHUB_REF -match 'refs/tags/v(.+)') {
+          $version = $matches[1]
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+    
+    - name: Install Inno Setup
+      shell: pwsh
+      run: |
+        $innoUrl = "https://jrsoftware.org/download.php/is.exe"
+        $innoInstaller = "$env:TEMP\innosetup.exe"
+        Invoke-WebRequest -Uri $innoUrl -OutFile $innoInstaller
+        Start-Process -FilePath $innoInstaller -Args "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait
+    
+    - name: Build installer
+      shell: pwsh
+      run: |
+        $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        if (-not (Test-Path $iscc)) {
+          throw "Inno Setup not found at $iscc"
+        }
+        
+        & $iscc "installer\LemiCraft.iss" /DAppVersion=${{ steps.get_version.outputs.VERSION }}
+    
+    - name: Upload installer artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: lemicraft-installer-${{ steps.get_version.outputs.VERSION }}
+        path: installer_output/*.exe
+        retention-days: 30
+  
+  # ================================================
+  # Sign with SignPath
+  # ================================================
+  sign:
+    name: Sign Release
+    needs: [build, installer]
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download installer
+      uses: actions/download-artifact@v4
+      with:
+        name: lemicraft-installer-${{ needs.build.outputs.VERSION }}
+        path: unsigned/
+    
+    # SignPath integration будет добавлена после одобрения заявки
+    # - name: Sign with SignPath
+    #   uses: signpath/github-action-submit-signing-request@v1
+    #   with:
+    #     api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+    #     organization-id: YOUR_ORG_ID
+    #     project-slug: lemicraft-launcher
+    #     signing-policy-slug: release-signing
+    #     artifact-configuration-slug: installer
+    #     input-artifact-path: unsigned/LemiCraft_Installer_*.exe
+    #     output-artifact-path: signed/
+    
+    - name: Upload signed installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: lemicraft-installer-signed-${{ needs.build.outputs.VERSION }}
+        path: signed/*.exe
+        retention-days: 90
+  
+  # ================================================
+  # Create GitHub Release
+  # ================================================
+  release:
+    name: Create Release
+    needs: [build, installer, sign]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Get version
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+    
+    - name: Download signed installer
+      uses: actions/download-artifact@v4
+      with:
+        name: lemicraft-installer-signed-${{ steps.get_version.outputs.VERSION }}
+        path: release/
+    
+    - name: Generate changelog
+      id: changelog
+      shell: bash
+      run: |
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -z "$PREVIOUS_TAG" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s" HEAD)
+        else
+          CHANGELOG=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        fi
+        
+        echo "$CHANGELOG" > CHANGELOG.txt
+        
+        echo "Changelog:"
+        cat CHANGELOG.txt
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: LemiCraft Launcher v${{ steps.get_version.outputs.VERSION }}
+        body_path: CHANGELOG.txt
+        files: |
+          release/*.exe
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -173,6 +173,11 @@ namespace LemiCraft_Launcher
         {
             var config = ConfigService.Load();
             var profile = AuthService.LoadProfile();
+            if (profile == null)
+            {
+                MainFrame.Navigate(new LoginPage());
+                return;
+            }
 
             AccountInfoPanel.IsEnabled = false;
             SettingsButton.IsEnabled = false;
@@ -445,7 +450,7 @@ namespace LemiCraft_Launcher
             }
         }
 
-        private async void UpdateModpack_Click(object sender, RoutedEventArgs e)
+        private void UpdateModpack_Click(object sender, RoutedEventArgs e)
         {
             if (PlayButton.Tag is ModpackVersion version)
             {

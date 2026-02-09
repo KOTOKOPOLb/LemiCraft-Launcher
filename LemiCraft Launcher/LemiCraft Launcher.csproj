@@ -17,10 +17,17 @@
     <Copyright>© 2026 LemiCraft</Copyright>
     <Description>Официальный лаунчер для проекта LemiCraft</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SignAssembly>False</SignAssembly>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <PublishTrimmed>false</PublishTrimmed>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <PublishDir>publish\</PublishDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Microsoft.VisualBasic" />
     <PackageReference Include="CmlLib.Core" Version="4.0.6" />
     <PackageReference Include="CmlLib.Core.Auth.Microsoft" Version="3.3.1" />
     <PackageReference Include="Markdig" Version="0.44.0" />
@@ -45,5 +52,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <Target Name="BuildInstaller" AfterTargets="Publish">
+    <Exec Command="&quot;C:\Users\Home\AppData\Local\Programs\Inno Setup 6\ISCC.exe&quot; &quot;$(SolutionDir)installer\LemiCraft.iss&quot; /DAppVersion=$(Version)" />
+  </Target>
 
 </Project>

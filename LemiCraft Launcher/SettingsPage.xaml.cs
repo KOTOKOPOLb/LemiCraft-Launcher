@@ -169,6 +169,12 @@ namespace LemiCraft_Launcher
             {
                 MinecraftLauncherService.ResetLauncherCache();
 
+                var versionFilePath = Path.Combine(newGamePath, "modpack-version.json");
+                if (File.Exists(versionFilePath))
+                {
+                    try { File.Delete(versionFilePath); } catch { }
+                }
+
                 CustomMessageBox.ShowInformation(
                     "Путь установки игры изменен!\n\n" +
                     $"Новый путь: {newGamePath}\n\n" +

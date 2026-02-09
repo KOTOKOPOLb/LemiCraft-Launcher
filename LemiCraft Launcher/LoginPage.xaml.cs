@@ -46,20 +46,20 @@ namespace LemiCraft_Launcher
         {
             CustomMessageBox.ShowInformation("Будет в будущем...");
             return;
-            var fadeOut = (Storyboard)Resources["FadeOutContent"];
-            fadeOut.Completed += (s, args) =>
-            {
-                ProviderSelection.Visibility = Visibility.Collapsed;
-                CredentialsForm.Visibility = Visibility.Visible;
-                CredentialsProviderText.Text = _currentProvider;
-                LoginTextBox.Text = "";
-                PasswordBox.Password = "";
-                ErrorPanel.Visibility = Visibility.Collapsed;
-                var fadeIn = (Storyboard)Resources["FadeInContent"];
-                fadeIn.Begin();
-                LoginTextBox.Focus();
-            };
-            fadeOut.Begin();
+            //var fadeOut = (Storyboard)Resources["FadeOutContent"];
+            //fadeOut.Completed += (s, args) =>
+            //{
+            //    ProviderSelection.Visibility = Visibility.Collapsed;
+            //    CredentialsForm.Visibility = Visibility.Visible;
+            //    CredentialsProviderText.Text = _currentProvider;
+            //    LoginTextBox.Text = "";
+            //    PasswordBox.Password = "";
+            //    ErrorPanel.Visibility = Visibility.Collapsed;
+            //    var fadeIn = (Storyboard)Resources["FadeInContent"];
+            //    fadeIn.Begin();
+            //    LoginTextBox.Focus();
+            //};
+            //fadeOut.Begin();
         }
 
         private void SwitchToSelection()
@@ -91,9 +91,9 @@ namespace LemiCraft_Launcher
                     {
                         var profile = new UserProfile
                         {
-                            Username = session.Username,
-                            AccessToken = session.AccessToken,
-                            Uuid = session.UUID,
+                            Username = session.Username ?? "",
+                            AccessToken = session.AccessToken ?? "",
+                            Uuid = session.UUID ?? "",
                             Provider = "Microsoft",
                             LastLogin = DateTime.Now
                         };
@@ -102,8 +102,8 @@ namespace LemiCraft_Launcher
 
                         if (mainWindow != null)
                         {
-                            mainWindow.UpdateAccountInfo(session.Username, true);
-                            await mainWindow.LoadUserAvatarAsync(session.Username);
+                            mainWindow.UpdateAccountInfo(session.Username ?? "Unknown", true);
+                            await mainWindow.LoadUserAvatarAsync(session.Username ?? "Unknown");
                             mainWindow.NavigateToHome();
                         }
                     }

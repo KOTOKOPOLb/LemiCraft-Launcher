@@ -301,9 +301,9 @@ namespace LemiCraft_Launcher.Services
                     var session = await loginHandler.Authenticate();
                     if (session != null && !string.IsNullOrWhiteSpace(session.AccessToken))
                     {
-                        profile.Username = session.Username;
+                        profile.Username = session.Username ?? "";
                         profile.AccessToken = session.AccessToken;
-                        profile.Uuid = session.UUID;
+                        profile.Uuid = session.UUID ?? "";
                         profile.LastLogin = DateTime.Now;
                         SaveProfile(profile);
 
