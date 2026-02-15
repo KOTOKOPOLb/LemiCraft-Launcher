@@ -1,6 +1,6 @@
+using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Services;
 using LemiCraft_Launcher.Windows;
-using LemiCraft_Launcher.Models;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -322,6 +322,21 @@ namespace LemiCraft_Launcher
                     IsEnabled = false
                 };
                 menu.Items.Add(providerItem);
+
+                var skinsItem = new MenuItem
+                {
+                    Header = "🎨 Открыть скины"
+                };
+                skinsItem.Click += (s, ev) =>
+                {
+                    // Ely.by не предоставляет API для получения скинов, поэтому открываем их страницу в браузере
+                    // Позже возможно будет реализована внутренняя страница для работы со скинами через куки
+                    if (profile.Provider == "Ely.by")
+                        Process.Start(new ProcessStartInfo { FileName = "https://ely.by/skins?uploader=" + profile.Username, UseShellExecute = true });
+                    else
+                        MainFrame.Navigate(new SkinLibraryPage());
+                };
+                menu.Items.Add(skinsItem);
             }
 
             var logoutItem = new MenuItem

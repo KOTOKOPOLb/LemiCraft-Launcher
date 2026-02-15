@@ -11,9 +11,7 @@ namespace LemiCraft_Launcher.Services
     public static class UpdateService
     {
         private static readonly HttpClient _httpClient = new();
-        private static string GetDataDir() =>
-            Path.GetDirectoryName(ConfigService.Load().GamePath) ??
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
+        private static string GetDataDir() => Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
 
         private static string VersionFilePath => Path.Combine(GetDataDir(), "version.json");
 
@@ -24,9 +22,9 @@ namespace LemiCraft_Launcher.Services
         {
             try
             {
-                var localVersion = LoadLocalVersion();
+                var localVersion = AppVersion.Current;
                 var installedModpackVersion = await ModpackVersionManager.GetInstalledVersionAsync();
-                var launcherTask = CheckLauncherUpdateAsync(localVersion.LauncherVersion);
+                var launcherTask = CheckLauncherUpdateAsync(localVersion);
                 var modpackTask = CheckModpackUpdateAsync(installedModpackVersion);
 
                 await Task.WhenAll(launcherTask, modpackTask);
@@ -41,9 +39,6 @@ namespace LemiCraft_Launcher.Services
                     LauncherUpdateAvailable = launcherVersion != null,
                     ModpackUpdateAvailable = modpackVersion != null
                 };
-
-                localVersion.LastUpdateCheck = DateTime.Now;
-                SaveLocalVersion(localVersion);
 
                 return result;
             }

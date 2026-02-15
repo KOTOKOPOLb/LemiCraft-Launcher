@@ -8,21 +8,19 @@ namespace LemiCraft_Launcher
         {
             get
             {
-                try
-                {
-                    var version = Assembly.GetExecutingAssembly()
-                        .GetName()
-                        .Version;
+                var version = Assembly.GetExecutingAssembly().GetName().Version;
+                return version != null
+                    ? $"{version.Major}.{version.Minor}.{version.Build}"
+                    : "1.0.0";
+            }
+        }
 
-                    if (version != null)
-                        return version.ToString(3);
-
-                    return "1.0.0";
-                }
-                catch
-                {
-                    return "1.0.0";
-                }
+        public static string FullVersion
+        {
+            get
+            {
+                var version = Assembly.GetExecutingAssembly().GetName().Version;
+                return version?.ToString() ?? "1.0.0.0";
             }
         }
     }

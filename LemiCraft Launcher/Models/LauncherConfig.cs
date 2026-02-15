@@ -19,6 +19,5 @@ namespace LemiCraft_Launcher.Models
 
         public string? AuthlibInjectorPath { get; set; }
         public string? AuthlibInjectorDownloadUrl { get; set; } = "https://authlib-injector.yushi.moe/artifact/latest.json";
-
     }
 }

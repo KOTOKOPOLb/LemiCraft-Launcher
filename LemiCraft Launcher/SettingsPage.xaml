@@ -489,7 +489,7 @@
             </ScrollViewer>
 
             <Rectangle x:Name="TopFade" Height="40" VerticalAlignment="Top" IsHitTestVisible="False"
-                       Opacity="0" Margin="0,0,12,0">
+                       Opacity="0" Margin="0,0,20,0">
                 <Rectangle.Fill>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Color="#FF0F172A" Offset="0"/>
@@ -499,7 +499,7 @@
             </Rectangle>
 
             <Rectangle x:Name="BottomFade" Height="40" VerticalAlignment="Bottom" IsHitTestVisible="False"
-                       Opacity="0" Margin="0,0,12,0">
+                       Opacity="0" Margin="0,0,20,0">
                 <Rectangle.Fill>
                     <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
                         <GradientStop Color="#FF0F172A" Offset="0"/>
