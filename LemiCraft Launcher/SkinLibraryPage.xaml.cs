@@ -70,16 +70,43 @@ namespace LemiCraft_Launcher
             {
                 ShowLoading();
 
-                var skins = await SkinLibraryService.GetUserSkinsAsync(_username, forceRefresh);
+                var profile = AuthService.LoadProfile();
+
+                if (profile == null)
+                {
+                    CustomMessageBox.ShowWarning("Для использования библиотеки скинов необходимо войти в аккаунт");
+                    NavigationService?.GoBack();
+                    return;
+                }
+
+                var skins = await HybridSkinService.GetUserSkinsAsync(profile, forceRefresh);
+
+                if (skins == null && profile.Provider == "Ely.by")
+                {
+                    var relogin = CustomMessageBox.ShowQuestion(
+                        "Сессия Ely.by истекла\n\nВойти заново?",
+                        "Требуется вход");
+
+                    if (relogin == CustomMessageBox.MessageBoxResult.Yes)
+                    {
+                        await ShowElybyLoginAsync(profile);
+                        return;
+                    }
+                    else
+                    {
+                        ShowEmpty();
+                        return;
+                    }
+                }
+
                 _allSkins = skins ?? new List<SkinLibraryItem>();
 
                 var sorted = _allSkins.OrderByDescending(s => s.IsActive)
-                                      .ThenByDescending(s => s.CreatedAt)
-                                      .ToList();
+                    .ThenByDescending(s => s.CreatedAt)
+                    .ToList();
 
                 SkinsGrid.ItemsSource = sorted;
                 CountText.Text = $"Всего скинов: {_allSkins.Count}";
-
                 ShowContent(sorted.Any());
 
                 _ = PreloadImagesAsync(sorted);
@@ -88,8 +115,29 @@ namespace LemiCraft_Launcher
             {
                 Debug.WriteLine($"❌ Error loading skins: {ex.Message}");
                 ShowEmpty();
-                CustomMessageBox.ShowError("Не удалось загрузить скины. Проверьте подключение к интернету");
+                CustomMessageBox.ShowError("Не удалось загрузить скины");
             }
+        }
+
+        private async Task ShowElybyLoginAsync(UserProfile profile)
+        {
+            var mainWindow = Window.GetWindow(this) as MainWindow;
+            mainWindow?.ShowOverlay();
+
+            var loginWindow = new ElyByLoginWindow { Owner = mainWindow };
+
+            if (loginWindow.ShowDialog() == true && loginWindow.ExtractedCookies != null)
+            {
+                profile.ElybyPhpSessId = loginWindow.ExtractedCookies.PhpSessId;
+                profile.ElybyIdentity = loginWindow.ExtractedCookies.Identity;
+                profile.ElybyCookiesExpiry = DateTime.Now.AddDays(7);
+
+                AuthService.SaveProfile(profile);
+
+                await LoadSkinsAsync(forceRefresh: true);
+            }
+
+            mainWindow?.HideOverlay();
         }
 
         private async Task PreloadImagesAsync(List<SkinLibraryItem> skins)

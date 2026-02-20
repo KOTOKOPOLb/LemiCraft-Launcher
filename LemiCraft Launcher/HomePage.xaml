@@ -377,7 +377,7 @@
                             Height="30"
                             Opacity="0"
                             IsHitTestVisible="False"
-                            Margin="0,0,40,0">
+                            Margin="0,-1,40,0">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                 <GradientStop Color="#FF1E293B" Offset="0"/>
@@ -391,7 +391,7 @@
                             Height="30"
                             Opacity="0"
                             IsHitTestVisible="False"
-                            Margin="0,0,40,0">
+                            Margin="0,0,40,-1">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
                                 <GradientStop Color="#FF1E293B" Offset="0"/>

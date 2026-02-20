@@ -179,14 +179,21 @@ namespace LemiCraft_Launcher.Windows
 
             try
             {
-                var result = await SkinLibraryService.UploadSkinAsync(
+                var profile = AuthService.LoadProfile();
+                if (profile == null)
+                {
+                    CustomMessageBox.ShowError("Не удалось загрузить профиль");
+                    return;
+                }
+
+                var success = await HybridSkinService.UploadSkinAsync(
                     _selectedFilePath,
                     name,
                     model,
-                    _username
+                    profile
                 );
 
-                if (result?.Success == true)
+                if (success)
                 {
                     DialogResult = true;
                     CloseWithAnimation();

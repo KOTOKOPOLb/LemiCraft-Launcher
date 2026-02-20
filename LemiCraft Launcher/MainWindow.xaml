@@ -232,7 +232,8 @@
                     Background="#CC0F172A"
                     Opacity="0"
                     Visibility="Collapsed"
-                    IsHitTestVisible="True">
+                    IsHitTestVisible="True"
+                    CornerRadius="0,0,16,16">
                 <Border.RenderTransform>
                     <TranslateTransform Y="0"/>
                 </Border.RenderTransform>

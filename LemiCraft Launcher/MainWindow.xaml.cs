@@ -327,15 +327,7 @@ namespace LemiCraft_Launcher
                 {
                     Header = "🎨 Открыть скины"
                 };
-                skinsItem.Click += (s, ev) =>
-                {
-                    // Ely.by не предоставляет API для получения скинов, поэтому открываем их страницу в браузере
-                    // Позже возможно будет реализована внутренняя страница для работы со скинами через куки
-                    if (profile.Provider == "Ely.by")
-                        Process.Start(new ProcessStartInfo { FileName = "https://ely.by/skins?uploader=" + profile.Username, UseShellExecute = true });
-                    else
-                        MainFrame.Navigate(new SkinLibraryPage());
-                };
+                skinsItem.Click += (s, ev) => MainFrame.Navigate(new SkinLibraryPage());
                 menu.Items.Add(skinsItem);
             }
 

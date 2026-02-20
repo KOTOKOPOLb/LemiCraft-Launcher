@@ -3,6 +3,7 @@ namespace LemiCraft_Launcher.Models
     public class SkinLibraryItem
     {
         public int Id { get; set; }
+        public int? ElybyId { get; set; }
         public string Name { get; set; } = "";
         public string Model { get; set; } = "steve";
         public string FileUrl { get; set; } = "";

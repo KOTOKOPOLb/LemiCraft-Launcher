@@ -2,7 +2,6 @@ using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Services;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -16,7 +15,6 @@ namespace LemiCraft_Launcher.Windows
     {
         private readonly SkinLibraryItem _skin;
         private readonly string _username;
-        private static readonly HttpClient _httpClient = new();
 
         public SkinDetailsWindow(SkinLibraryItem skin, string username)
         {
@@ -56,8 +54,8 @@ namespace LemiCraft_Launcher.Windows
 
             var originalModel = _skin.Model.ToLower();
             ModelBadge.Text = originalModel == "alex" || _skin.Model.Contains("тонкие")
-                ? "тонкие руки"
-                : "толстые руки";
+                ? "Тонкие руки"
+                : "Толстые руки";
 
             if (_skin.IsActive)
             {
@@ -187,13 +185,13 @@ namespace LemiCraft_Launcher.Windows
             try
             {
                 var profile = AuthService.LoadProfile();
-                var success = await SkinLibraryService.ApplySkinAsync(
-                    _skin.Id,
-                    _username,
-                    profile?.AccessToken,
-                    profile?.Provider,
-                    profile?.Uuid
-                );
+                if (profile == null)
+                {
+                    CustomMessageBox.ShowError("Не удалось загрузить профиль");
+                    return;
+                }
+
+                var success = await HybridSkinService.ApplySkinAsync(_skin, profile);
 
                 if (success)
                 {
@@ -202,9 +200,7 @@ namespace LemiCraft_Launcher.Windows
                     CloseWithAnimation();
                 }
                 else
-                {
                     CustomMessageBox.ShowError("Не удалось применить скин");
-                }
             }
             catch (Exception ex)
             {
@@ -230,18 +226,23 @@ namespace LemiCraft_Launcher.Windows
 
             try
             {
-                var success = await SkinLibraryService.DeleteSkinAsync(_skin.Id, _username);
+                var profile = AuthService.LoadProfile();
+                if (profile == null)
+                {
+                    CustomMessageBox.ShowError("Не удалось загрузить профиль");
+                    return;
+                }
+
+                var success = await HybridSkinService.DeleteSkinAsync(_skin, profile);
 
                 if (success)
                 {
-                    CustomMessageBox.ShowSuccess("Скин успешно удалён из коллекции");
+                    CustomMessageBox.ShowSuccess("Скин успешно удалён");
                     DialogResult = true;
                     CloseWithAnimation();
                 }
                 else
-                {
                     CustomMessageBox.ShowError("Не удалось удалить скин");
-                }
             }
             catch (Exception ex)
             {

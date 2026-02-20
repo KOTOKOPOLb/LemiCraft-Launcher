@@ -16,7 +16,7 @@ namespace LemiCraft_Launcher.Services
             return $"{config.ApiBaseUrl}/launcher/skins/{endpoint}";
         }
 
-        public static async Task<List<SkinLibraryItem>> GetUserSkinsAsync(string username, bool forceRefresh = false)
+        public static async Task<List<SkinLibraryItem>> GetUserSkinsAsync(string username, bool forceRefresh = false, string? provider = null)
         {
             try
             {
@@ -27,7 +27,11 @@ namespace LemiCraft_Launcher.Services
                         return cachedSkins;
                 }
 
-                var url = GetApiUrl($"user/{Uri.EscapeDataString(username)}");
+                var endpoint = provider != null
+                    ? $"user/{Uri.EscapeDataString(username)}?provider={Uri.EscapeDataString(provider)}"
+                    : $"user/{Uri.EscapeDataString(username)}";
+
+                var url = GetApiUrl(endpoint);
                 Debug.WriteLine($"🔍 Fetching: {url}");
 
                 var response = await _httpClient.GetAsync(url);
@@ -137,7 +141,6 @@ namespace LemiCraft_Launcher.Services
 
                 if (success)
                     SkinCacheService.InvalidateSkinsCache(username);
-
                 return success;
             }
             catch (Exception ex)
