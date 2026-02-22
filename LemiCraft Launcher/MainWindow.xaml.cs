@@ -196,7 +196,11 @@ namespace LemiCraft_Launcher
             process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
 
             if (_logsWindow != null)
+            {
                 _logsWindow.SetStatus("Запуск игры...", "#FFA500");
+                _logsWindow._timer.Reset();
+                _logsWindow._timer.Start();
+            }
 
             process.OutputDataReceived += (s, e) =>
             {
@@ -221,10 +225,10 @@ namespace LemiCraft_Launcher
 
             _ = Task.Run(() =>
             {
-                if (config.LauncherBehavior == 0)
+                if (config.LauncherBehavior == 1)
                     Dispatcher.Invoke(() => CloseButton_Click(null, new RoutedEventArgs()));
-                else if (config.LauncherBehavior == 1)
-                    Dispatcher.Invoke(() => WindowState = WindowState.Minimized);
+                else if (config.LauncherBehavior == 2)
+                    Hide();
 
                 process.WaitForExit();
 
@@ -238,6 +242,7 @@ namespace LemiCraft_Launcher
                     AccountInfoPanel.IsEnabled = true;
                     SettingsButton.IsEnabled = true;
                     _logsWindow?.SetStatus("Игра закрыта", "#EF4444");
+                    _logsWindow?._timer.Stop();
                 });
             });
         }

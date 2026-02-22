@@ -6,6 +6,8 @@ namespace LemiCraft_Launcher.Services
 {
     public static class ModpackVersionManager
     {
+        private static readonly JsonSerializerOptions _writeOptions = new() { WriteIndented = true };
+
         private static string GetVersionFilePath()
         {
             var config = ConfigService.Load();
@@ -66,10 +68,7 @@ namespace LemiCraft_Launcher.Services
                     FileSize = fileSize
                 };
 
-                var json = JsonSerializer.Serialize(versionInfo, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
+                var json = JsonSerializer.Serialize(versionInfo, _writeOptions);
 
                 await File.WriteAllTextAsync(versionFilePath, json);
 

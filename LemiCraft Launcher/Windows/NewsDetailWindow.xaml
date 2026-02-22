@@ -13,19 +13,19 @@
     <Window.Resources>
         <Style x:Key="NewsScrollBar" TargetType="ScrollBar">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Width" Value="6"/>
-            <Setter Property="Margin" Value="4,0,0,0"/>
+            <Setter Property="Width" Value="4"/>
+            <Setter Property="Margin" Value="0,8,6,8"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollBar">
                         <Grid>
-                            <Border Background="Transparent" CornerRadius="3"/>
+                            <Border Background="Transparent" CornerRadius="2"/>
                             <Track x:Name="PART_Track" IsDirectionReversed="True">
                                 <Track.Thumb>
                                     <Thumb>
                                         <Thumb.Template>
                                             <ControlTemplate>
-                                                <Border Background="#374151" CornerRadius="3"/>
+                                                <Border Background="#4A5568" CornerRadius="2"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -35,52 +35,6 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-
-        <Style x:Key="MarkdownParagraph" TargetType="Paragraph">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="#E5E7EB"/>
-            <Setter Property="LineHeight" Value="24"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-        </Style>
-
-        <Style x:Key="MarkdownHeader1" TargetType="Paragraph">
-            <Setter Property="FontSize" Value="28"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Margin" Value="0,24,0,16"/>
-        </Style>
-
-        <Style x:Key="MarkdownHeader2" TargetType="Paragraph">
-            <Setter Property="FontSize" Value="22"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Margin" Value="0,20,0,12"/>
-        </Style>
-
-        <Style x:Key="MarkdownHeader3" TargetType="Paragraph">
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Margin" Value="0,16,0,8"/>
-        </Style>
-
-        <Style x:Key="MarkdownCode" TargetType="Paragraph">
-            <Setter Property="FontFamily" Value="Consolas, Courier New"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#E6EEF3"/>
-            <Setter Property="Background" Value="#071020"/>
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="Margin" Value="0,8,0,16"/>
-        </Style>
-
-        <Style x:Key="MarkdownBlockquote" TargetType="Paragraph">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="#9CA3AF"/>
-            <Setter Property="BorderBrush" Value="#374151"/>
-            <Setter Property="BorderThickness" Value="3,0,0,0"/>
-            <Setter Property="Padding" Value="16,8"/>
-            <Setter Property="Margin" Value="0,8,0,16"/>
         </Style>
     </Window.Resources>
 
@@ -101,34 +55,57 @@
                     Background="#1E293B"
                     CornerRadius="16,16,0,0"
                     MouseLeftButtonDown="TitleBar_MouseDown">
-                <Grid Margin="24,16">
-                    <TextBlock Text="Новость"
-                               FontSize="16"
+                <Grid Margin="20,0" Height="52" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Width="8" Height="8"
+                            CornerRadius="4"
+                            Background="#3B82F6"
+                            VerticalAlignment="Center"
+                            Margin="0,0,10,0"/>
+
+                    <TextBlock Grid.Column="1"
+                               Text="Новость"
+                               FontSize="14"
                                FontWeight="SemiBold"
-                               Foreground="White"
+                               Foreground="#CBD5E1"
                                VerticalAlignment="Center"/>
 
-                    <Button Content="×"
+                    <Button Grid.Column="2"
                             x:Name="CloseButton"
-                            Width="32"
-                            Height="32"
-                            HorizontalAlignment="Right"
-                            FontSize="20"
-                            Background="Transparent"
-                            Foreground="White"
-                            BorderThickness="0"
+                            Width="28" Height="28"
+                            VerticalAlignment="Center"
                             Cursor="Hand"
-                            Click="CloseButton_Click">
+                            Click="CloseButton_Click"
+                            Background="Transparent"
+                            BorderThickness="0">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="border"
-                                        Background="{TemplateBinding Background}"
-                                        CornerRadius="6">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        Background="Transparent"
+                                        CornerRadius="6"
+                                        Width="28" Height="28">
+                                    <Path Data="M6,6 L22,22 M22,6 L6,22"
+                                          Width="16"
+                                          Height="16"
+                                          Stretch="Uniform"
+                                          Stroke="#94A3B8"
+                                          StrokeThickness="1.8"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          x:Name="xPath"/>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter TargetName="border" Property="Background" Value="#374151"/>
+                                        <Setter TargetName="xPath" Property="Stroke" Value="White"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -137,103 +114,96 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Row="1">
-                <Border CornerRadius="0,0,16,16" ClipToBounds="True" Margin="0">
+            <Grid Grid.Row="1" ClipToBounds="True">
                 <ScrollViewer x:Name="DetailScrollViewer"
                               VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
                               ScrollChanged="DetailScrollViewer_ScrollChanged"
-                              Padding="0,0,12,40"
-                              PreviewMouseWheel="DetailScrollViewer_PreviewMouseWheel">
-
+                              PreviewMouseWheel="DetailScrollViewer_PreviewMouseWheel"
+                              Padding="0">
                     <ScrollViewer.Resources>
-                        <Style TargetType="ScrollBar" BasedOn="{StaticResource NewsScrollBar}" />
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource NewsScrollBar}"/>
                     </ScrollViewer.Resources>
 
-                    <StackPanel Margin="24,20,24,24">
+                    <StackPanel Margin="28,20,20,32">
+
                         <Border x:Name="ImageContainer"
-                                Height="320"
+                                Height="300"
                                 CornerRadius="12"
                                 Margin="0,0,0,20"
                                 Visibility="Collapsed"
-                                Loaded="ImageContainer_Loaded"
-                                SizeChanged="ImageContainer_SizeChanged">
+                                ClipToBounds="True">
                             <Grid>
                                 <Image x:Name="NewsImage"
-                                       Stretch="Uniform"
-                                       StretchDirection="Both"
+                                       Stretch="UniformToFill"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
-                                       MaxWidth="{Binding ActualWidth, ElementName=ImageContainer}"
                                        RenderOptions.BitmapScalingMode="HighQuality"/>
                                 <Rectangle VerticalAlignment="Bottom"
-                                           Height="100"
+                                           Height="80"
                                            IsHitTestVisible="False">
                                     <Rectangle.Fill>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                             <GradientStop Color="#000F172A" Offset="0"/>
-                                            <GradientStop Color="#CC0F172A" Offset="1"/>
+                                            <GradientStop Color="#AA0F172A" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Rectangle.Fill>
                                 </Rectangle>
                             </Grid>
                         </Border>
 
-                        <Grid Margin="0,0,0,16">
+                        <Grid Margin="0,0,0,14">
                             <Border x:Name="CategoryBadge"
                                     Background="#22C55E"
                                     CornerRadius="6"
-                                    Padding="12,6"
+                                    Padding="10,5"
                                     HorizontalAlignment="Left">
                                 <TextBlock x:Name="CategoryText"
-                                          Text="Общее"
-                                          FontSize="12"
-                                          FontWeight="Bold"
-                                          Foreground="White"/>
+                                           Text="Общее"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="White"/>
                             </Border>
 
                             <TextBlock x:Name="DateText"
-                                      Text="01.01.2024"
-                                      FontSize="13"
-                                      Foreground="#6B7280"
-                                      HorizontalAlignment="Right"
-                                      VerticalAlignment="Center"/>
+                                       Text="01.01.2024"
+                                       FontSize="12"
+                                       Foreground="#64748B"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"/>
                         </Grid>
 
                         <TextBlock x:Name="TitleText"
-                                  Text="Заголовок новости"
-                                  FontSize="26"
-                                  FontWeight="Bold"
-                                  Foreground="White"
-                                  TextWrapping="Wrap"
-                                  LineHeight="36"
-                                  Margin="0,0,0,24"/>
+                                   Text="Заголовок новости"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="White"
+                                   TextWrapping="Wrap"
+                                   LineHeight="34"
+                                   Margin="0,0,0,20"/>
 
-                        <Border Background="Transparent" 
-                                CornerRadius="8" 
-                                BorderThickness="0" 
-                                Margin="0,0,0,24">
-                            <FlowDocumentScrollViewer x:Name="MarkdownViewer"
-                                                      VerticalScrollBarVisibility="Disabled"
-                                                      Background="Transparent"
-                                                      BorderThickness="0"
-                                                      IsToolBarVisible="False"
-                                                      Focusable="False"
-                                                      IsHitTestVisible="False"
-                                                      Cursor="Arrow"
-                                                      PreviewMouseWheel="MarkdownViewer_PreviewMouseWheel">
-                                <FlowDocument x:Name="MarkdownDocument"
-                                              Background="Transparent"
-                                              PagePadding="0"
-                                              FontFamily="Segoe UI, Arial"
-                                              FontSize="14"
-                                              Foreground="#E5E7EB"
-                                              LineHeight="24"/>
-                            </FlowDocumentScrollViewer>
-                        </Border>
+                        <FlowDocumentScrollViewer x:Name="MarkdownViewer"
+                                                  VerticalScrollBarVisibility="Disabled"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  IsToolBarVisible="False"
+                                                  Focusable="False"
+                                                  IsHitTestVisible="False"
+                                                  Cursor="Arrow"
+                                                  Margin="0,0,0,20"
+                                                  PreviewMouseWheel="MarkdownViewer_PreviewMouseWheel">
+                            <FlowDocument x:Name="MarkdownDocument"
+                                          Background="Transparent"
+                                          PagePadding="0"
+                                          FontFamily="Segoe UI, Arial"
+                                          FontSize="14"
+                                          Foreground="#E5E7EB"
+                                          LineHeight="24"/>
+                        </FlowDocumentScrollViewer>
 
                         <Border Height="1"
-                                Background="#374151"
-                                Margin="0,0,0,20"/>
+                                Background="#1E293B"
+                                Margin="0,0,0,16"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -241,15 +211,15 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Orientation="Horizontal" 
-                                        Grid.Column="0" 
+                            <StackPanel Orientation="Horizontal"
+                                        Grid.Column="0"
                                         VerticalAlignment="Center">
-                                <Border Width="44" 
-                                        Height="44"
-                                        CornerRadius="22"
-                                        Margin="0,0,12,0">
+                                <Border Width="36"
+                                        Height="36"
+                                        CornerRadius="18"
+                                        Margin="0,0,10,0">
                                     <Border.Clip>
-                                        <EllipseGeometry Center="22,22" RadiusX="22" RadiusY="22"/>
+                                        <EllipseGeometry Center="18,18" RadiusX="18" RadiusY="18"/>
                                     </Border.Clip>
                                     <Image x:Name="AuthorAvatar"
                                            Stretch="UniformToFill"
@@ -258,58 +228,54 @@
 
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock x:Name="AuthorText"
-                                              Text="Автор"
-                                              FontSize="14"
-                                              FontWeight="SemiBold"
-                                              Foreground="White"/>
-                                    <TextBlock x:Name="RoleText"
-                                              Text="Администратор"
-                                              FontSize="12"
-                                              Foreground="#6B7280"
-                                              Margin="0,2,0,0"/>
+                                               Text="Автор"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="White"/>
+                                    <TextBlock Text="Администратор"
+                                               FontSize="11"
+                                               Foreground="#64748B"
+                                               Margin="0,1,0,0"/>
                                 </StackPanel>
                             </StackPanel>
 
-                                <Button Grid.Column="1"
-                                        Content="Открыть в Discord"
-                                        HorizontalAlignment="Right"
-                                        Height="48"
-                                        MinWidth="200"
-                                        Padding="24,0"
-                                        Background="#5865F2"
-                                        Foreground="White"
-                                        BorderThickness="0"
-                                        FontSize="14"
-                                        FontWeight="SemiBold"
-                                        Cursor="Hand"
-                                        Click="OpenDiscord_Click">
+                            <Button Grid.Column="1"
+                                    Content="Открыть в Discord"
+                                    Height="42"
+                                    MinWidth="190"
+                                    Padding="22,0"
+                                    Background="#5865F2"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand"
+                                    Click="OpenDiscord_Click">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                            <Border x:Name="border"
-                                                    Background="{TemplateBinding Background}"
-                                                    CornerRadius="10">
-                                                <ContentPresenter HorizontalAlignment="Center" 
-                                                                  VerticalAlignment="Center"/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="border" Property="Background" Value="#4752C4"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
-                            </Grid>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
+                                        <Border x:Name="border"
+                                                Background="{TemplateBinding Background}"
+                                                CornerRadius="8">
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#4752C4"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <Border x:Name="TopFade"
                         VerticalAlignment="Top"
-                        Height="40"
+                        Height="32"
                         Opacity="0"
-                        IsHitTestVisible="False"
-                        Margin="24,0,52,0">
+                        IsHitTestVisible="False">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                             <GradientStop Color="#FF0F172A" Offset="0"/>
@@ -320,10 +286,12 @@
 
                 <Border x:Name="BottomFade"
                         VerticalAlignment="Bottom"
-                        Height="40"
+                        Height="32"
                         Opacity="0"
                         IsHitTestVisible="False"
-                        Margin="24,0,52,0">
+                        CornerRadius="0,0,16,16"
+                        HorizontalAlignment="Stretch"
+                        Margin="0">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
                             <GradientStop Color="#FF0F172A" Offset="0"/>

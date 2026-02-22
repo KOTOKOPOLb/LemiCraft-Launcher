@@ -1,5 +1,4 @@
 using CmlLib.Core.Auth.Microsoft;
-using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Utils;
 using System.Diagnostics;
 using System.IO;
@@ -20,6 +19,8 @@ namespace LemiCraft_Launcher.Services
     public static class AuthService
     {
         private static readonly HttpClient _httpClient = new();
+
+        private static readonly JsonSerializerOptions _writeOptions = new() { WriteIndented = true };
 
         private static readonly string UserDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
 
@@ -115,14 +116,14 @@ namespace LemiCraft_Launcher.Services
             }
         }
 
-        public static async Task<AuthResult> LoginMicrosoftAsync(string username, string password)
+        public static Task<AuthResult> LoginMicrosoftAsync(string _, string _2)
         {
             // TODO: Реализовать авторизацию через Microsoft по логину\паролю
-            return new AuthResult
+            return Task.FromResult(new AuthResult
             {
                 Success = false,
                 ErrorMessage = "Авторизация через Microsoft временно недоступна.\nИспользуйте Ely.by или вход через браузер"
-            };
+            });
         }
 
         public static async Task<bool> ValidateElyByTokenAsync(string accessToken)
@@ -224,8 +225,7 @@ namespace LemiCraft_Launcher.Services
             try
             {
                 Directory.CreateDirectory(UserDataDir);
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                var json = JsonSerializer.Serialize(profile, options);
+                var json = JsonSerializer.Serialize(profile, _writeOptions);
                 CryptoUtils.SaveEncryptedStringToFile(EncryptedProfilePath, json);
             }
             catch (Exception ex)
@@ -516,8 +516,6 @@ namespace LemiCraft_Launcher.Services
                 using var doc = JsonDocument.Parse(body);
                 var rootElem = doc.RootElement;
                 var accessToken = rootElem.GetProperty("access_token").GetString() ?? "";
-                var refreshToken = rootElem.TryGetProperty("refresh_token", out var r) ? r.GetString() ?? "" : "";
-                var expiresIn = rootElem.TryGetProperty("expires_in", out var ex) ? ex.GetInt32() : 0;
 
                 var request = new HttpRequestMessage(HttpMethod.Get, "https://account.ely.by/api/account/v1/info");
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);

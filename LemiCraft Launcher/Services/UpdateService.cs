@@ -10,8 +10,11 @@ namespace LemiCraft_Launcher.Services
 {
     public static class UpdateService
     {
-        private static readonly HttpClient _httpClient = new();
-        private static string GetDataDir() => Path.Combine( Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
+        private static readonly HttpClient _httpClient = new()
+        {
+            DefaultRequestHeaders = { { "User-Agent", $"LemiCraft-Launcher/{AppVersion.Current}" } }
+        };
+        private static string GetDataDir() => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
 
         private static string VersionFilePath => Path.Combine(GetDataDir(), "version.json");
 
@@ -113,16 +116,20 @@ namespace LemiCraft_Launcher.Services
 
         public static async Task<bool> DownloadLauncherUpdateAsync(
             LauncherVersion version,
-            IProgress<double>? progress = null)
+            IProgress<(double percent, long bytes)>? progress = null)
         {
+            var installerFileName = Uri.TryCreate(version.DownloadUrl, UriKind.Absolute, out var uri)
+                ? Path.GetFileName(uri.LocalPath)
+                : "LemiCraft_Installer.exe";
+
+            if (string.IsNullOrWhiteSpace(installerFileName))
+                installerFileName = "LemiCraft_Installer.exe";
+
+            var tempPath = Path.Combine(Path.GetTempPath(), installerFileName);
+
             try
             {
-                var currentExePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                var currentExeDir = Path.GetDirectoryName(currentExePath) ?? "";
-                var newExePath = Path.Combine(currentExeDir, "LemiCraft Launcher_new.exe");
-                var oldExePath = Path.Combine(currentExeDir, "LemiCraft Launcher_old.exe");
-
-                progress?.Report(0);
+                progress?.Report((0, 0));
 
                 using (var response = await _httpClient.GetAsync(version.DownloadUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
@@ -131,7 +138,7 @@ namespace LemiCraft_Launcher.Services
                     var downloadedBytes = 0L;
 
                     using var contentStream = await response.Content.ReadAsStreamAsync();
-                    using var fileStream = new FileStream(newExePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    using var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
 
                     var buffer = new byte[81920];
                     int bytesRead;
@@ -141,39 +148,29 @@ namespace LemiCraft_Launcher.Services
                         await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
                         downloadedBytes += bytesRead;
 
-                        if (totalBytes > 0)
-                            progress?.Report((double)downloadedBytes / totalBytes * 100);
+                        var percent = totalBytes > 0
+                            ? (double)downloadedBytes / totalBytes * 100
+                            : -1;
+
+                        progress?.Report((percent, downloadedBytes));
                     }
                 }
 
-                progress?.Report(100);
+                progress?.Report((100, 0));
 
-                var batchPath = Path.Combine(Path.GetTempPath(), "update_launcher.bat");
-                var batchContent = $@"@echo off
-timeout /t 1 /nobreak > nul
-del ""{currentExePath.Replace(".dll", ".exe")}"" > nul 2>&1
-move /y ""{newExePath}"" ""{currentExePath.Replace(".dll", ".exe")}"" > nul 2>&1
-start """" ""{currentExePath.Replace(".dll", ".exe")}""
-del ""{batchPath}""
-";
-
-                await File.WriteAllTextAsync(batchPath, batchContent);
-
-                var psi = new ProcessStartInfo
+                Process.Start(new ProcessStartInfo
                 {
-                    FileName = batchPath,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                Process.Start(psi);
-                System.Windows.Application.Current.Shutdown();
+                    FileName = tempPath,
+                    Arguments = "/SILENT /NORESTART /NOCANCEL /SP-",
+                    UseShellExecute = true
+                });
 
                 return true;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Ошибка загрузки обновления лаунчера: {ex.Message}");
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
                 return false;
             }
         }

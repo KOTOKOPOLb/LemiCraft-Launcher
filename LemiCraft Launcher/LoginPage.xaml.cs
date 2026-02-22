@@ -1,5 +1,4 @@
 ﻿using CmlLib.Core.Auth.Microsoft;
-using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Services;
 using System.Diagnostics;
 using System.Windows;
@@ -42,25 +41,7 @@ namespace LemiCraft_Launcher
         private void BackToSelection_Click(object sender, RoutedEventArgs e) => SwitchToSelection();
 
         //TODO Доделать
-        private void ShowCredentialsForm_Click(object sender, RoutedEventArgs e)
-        {
-            CustomMessageBox.ShowInformation("Будет в будущем...");
-            return;
-            //var fadeOut = (Storyboard)Resources["FadeOutContent"];
-            //fadeOut.Completed += (s, args) =>
-            //{
-            //    ProviderSelection.Visibility = Visibility.Collapsed;
-            //    CredentialsForm.Visibility = Visibility.Visible;
-            //    CredentialsProviderText.Text = _currentProvider;
-            //    LoginTextBox.Text = "";
-            //    PasswordBox.Password = "";
-            //    ErrorPanel.Visibility = Visibility.Collapsed;
-            //    var fadeIn = (Storyboard)Resources["FadeInContent"];
-            //    fadeIn.Begin();
-            //    LoginTextBox.Focus();
-            //};
-            //fadeOut.Begin();
-        }
+        private void ShowCredentialsForm_Click(object sender, RoutedEventArgs e) => CustomMessageBox.ShowInformation("Будет в будущем...");
 
         private void SwitchToSelection()
         {
@@ -166,9 +147,11 @@ namespace LemiCraft_Launcher
             {
                 AuthResult result = await AuthService.LoginElyByAsync(login, password);
 
-                if (!result.Success && result.ErrorMessage != null && result.ErrorMessage.Contains("two factor", StringComparison.OrdinalIgnoreCase) || result.ErrorMessage.Contains("Account protected", StringComparison.OrdinalIgnoreCase))
+                if (!result.Success && result.ErrorMessage != null && (result.ErrorMessage.Contains("two factor", StringComparison.OrdinalIgnoreCase) || result.ErrorMessage.Contains("Account protected", StringComparison.OrdinalIgnoreCase)))
                 {
-                    var token = Microsoft.VisualBasic.Interaction.InputBox("У аккаунта включена двухфакторная аутентификация.\nВведите код (TOTP) и нажмите OK:", "Двухфакторная аутентификация", "");
+                    var token = Microsoft.VisualBasic.Interaction.InputBox(
+                        "У аккаунта включена двухфакторная аутентификация.\nВведите код (TOTP) и нажмите OK:",
+                        "Двухфакторная аутентификация", "");
                     if (!string.IsNullOrWhiteSpace(token))
                     {
                         var passwordWithToken = password + ":" + token.Trim();
@@ -202,7 +185,7 @@ namespace LemiCraft_Launcher
                 SetControlsEnabled(true);
             }
         }
-        
+
         private void ShowError(string message)
         {
             ErrorText.Text = message;

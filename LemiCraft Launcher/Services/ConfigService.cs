@@ -11,32 +11,41 @@ namespace LemiCraft_Launcher.Services
 
         private static readonly string PathFile = Path.Combine(Dir, "config.json");
 
+        private static readonly JsonSerializerOptions _writeOptions = new() { WriteIndented = true };
+
+        private static LauncherConfig? _cache;
+
         public static LauncherConfig Load()
         {
+            if (_cache != null)
+                return _cache;
+
             try
             {
                 if (!File.Exists(PathFile))
-                    return new LauncherConfig();
+                {
+                    _cache = new LauncherConfig();
+                    return _cache;
+                }
 
                 string json = File.ReadAllText(PathFile);
-                return JsonSerializer.Deserialize<LauncherConfig>(json) ?? new LauncherConfig();
+                _cache = JsonSerializer.Deserialize<LauncherConfig>(json) ?? new LauncherConfig();
+                return _cache;
             }
             catch
             {
-                return new LauncherConfig();
+                _cache = new LauncherConfig();
+                return _cache;
             }
         }
 
         public static void Save(LauncherConfig config)
         {
             Directory.CreateDirectory(Dir);
-
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true
-            };
-
-            File.WriteAllText(PathFile, JsonSerializer.Serialize(config, options));
+            File.WriteAllText(PathFile, JsonSerializer.Serialize(config, _writeOptions));
+            _cache = config;
         }
+
+        public static void InvalidateCache() => _cache = null;
     }
 }

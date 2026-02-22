@@ -1,10 +1,11 @@
+using LemiCraft_Launcher.Windows;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using LemiCraft_Launcher.Windows;
 using Clipboard = System.Windows.Clipboard;
 using Color = System.Windows.Media.Color;
 using ColorConverter = System.Windows.Media.ColorConverter;
@@ -14,14 +15,15 @@ namespace LemiCraft_Launcher
     public partial class GameLogsWindow : Window
     {
         private int _lineCount = 0;
-        private readonly Stopwatch _timer = new();
+        public readonly Stopwatch _timer = new();
         private bool _inXmlBlock = false;
         private string _xmlBuffer = "";
+
+        private ScrollViewer? _logScrollViewer;
 
         public GameLogsWindow()
         {
             InitializeComponent();
-            _timer.Start();
 
             LogTextBox.Dispatcher.InvokeAsync(() =>
             {
@@ -50,15 +52,46 @@ namespace LemiCraft_Launcher
 
                 if (!string.IsNullOrEmpty(parsedLine))
                 {
+                    bool wasAtBottom = IsScrolledToBottom();
+
                     AppendColoredLog(parsedLine);
                     _lineCount++;
                     LineCountText.Text = $"Строк: {_lineCount}";
-                }
 
-                LogTextBox.CaretPosition = LogTextBox.Document.ContentEnd;
-                LogTextBox.Focusable = false;
-                LogTextBox.ScrollToEnd();
+                    if (wasAtBottom)
+                    {
+                        LogTextBox.CaretPosition = LogTextBox.Document.ContentEnd;
+                        LogTextBox.ScrollToEnd();
+                    }
+                }
             });
+        }
+
+        private bool IsScrolledToBottom()
+        {
+            var sv = GetLogScrollViewer();
+            if (sv == null) return true;
+            return sv.ScrollableHeight - sv.VerticalOffset < 40;
+        }
+
+        private ScrollViewer? GetLogScrollViewer()
+        {
+            if (_logScrollViewer != null) return _logScrollViewer;
+            _logScrollViewer = FindVisualChild<ScrollViewer>(LogTextBox);
+            return _logScrollViewer;
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject element) where T : DependencyObject
+        {
+            if (element is T target) return target;
+
+            int count = VisualTreeHelper.GetChildrenCount(element);
+            for (int i = 0; i < count; i++)
+            {
+                var result = FindVisualChild<T>(VisualTreeHelper.GetChild(element, i));
+                if (result != null) return result;
+            }
+            return null;
         }
 
         private void AppendColoredLog(string line)

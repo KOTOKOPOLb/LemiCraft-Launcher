@@ -76,7 +76,8 @@ AllowNoIcons=no
 AllowCancelDuringInstall=yes
 RestartIfNeededByRun=no
 CloseApplications=yes
-CloseApplicationsFilter=*.exe
+CloseApplicationsFilter={#AppExeName}
+RestartApplications=yes
 
 ; ================================================
 ; Signing
@@ -97,7 +98,7 @@ ClickNext=Нажмите "Далее" для продолжения или "От
 
 [Tasks]
 Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; GroupDescription: "Дополнительные значки:"
-Name: "quicklaunchicon"; Description: "Создать ярлык в панели быстрого запуска"; GroupDescription: "Дополнительные значки:"; Flags: unchecked
+Name: "quicklaunchicon"; Description: "Создать ярлык в панели быстрого запуска"; GroupDescription: "Дополнительные значки:"
 
 [Files]
 ; ================================================
@@ -111,7 +112,7 @@ Source: "..\LemiCraft Launcher\publish\{#AppExeName}"; DestDir: "{app}"; Flags: 
 ; Start Menu
 ; ================================================
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Comment: "Запустить {#AppName}"
-Name: "{group}\Открыть папку игры"; Filename: "{%APPDATA}\LemiCraft"; Comment: "Открыть папку с данными"
+Name: "{group}\Открыть папку игры"; Filename: "{userappdata}\LemiCraft"; Comment: "Открыть папку с данными"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"; Comment: "Удалить {#AppName}"
 
 ; ================================================
@@ -138,7 +139,7 @@ Root: HKCU; Subkey: "Software\LemiCraft\Launcher"; ValueType: string; ValueName:
 ; ================================================
 ; Post-Installation Actions
 ; ================================================
-Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; Flags: nowait postinstall
 
 [UninstallRun]
 ; ================================================
@@ -352,30 +353,18 @@ begin
     if (GameDir <> '') and DirExists(GameDir) then
       Msg := Msg + #13#10 + '• Папка игры: ' + GameDir;
     
-    Msg := Msg + #13#10 + #13#10 + 
-           'Что вы хотите сделать?' + #13#10 + #13#10 +
-           'Да — Удалить всё (настройки, моды, сохранения)' + #13#10 +
-           'Нет — Оставить данные (можно будет использовать при переустановке)' + #13#10 +
-           'Отмена — Прервать удаление';
+    Msg := Msg + #13#10 + #13#10 +
+           'Да — Удалить данные вместе с лаунчером' + #13#10 +
+           'Нет — Оставить данные (при переустановке они сохранятся)';
     
-    MsgResult := MsgBox(Msg, mbConfirmation, MB_YESNOCANCEL);
+    MsgResult := MsgBox(Msg, mbConfirmation, MB_YESNO);
     
-    case MsgResult of
-      IDYES:
-        begin
-          if DirExists(UserDataDir) then
-            DelTree(UserDataDir, True, True, True);
-          if (GameDir <> '') and DirExists(GameDir) then
-            DelTree(GameDir, True, True, True);
-        end;
-      IDNO:
-        begin
-          // Ничего не удаляем
-        end;
-      IDCANCEL:
-        begin
-          Result := False;
-        end;
+    if MsgResult = IDYES then
+    begin
+      if DirExists(UserDataDir) then
+        DelTree(UserDataDir, True, True, True);
+      if (GameDir <> '') and DirExists(GameDir) then
+        DelTree(GameDir, True, True, True);
     end;
   end;
 end;
@@ -389,12 +378,6 @@ begin
   begin
     RegDeleteKeyIncludingSubkeys(HKCU, 'Software\LemiCraft\Launcher');
     RegDeleteKeyIfEmpty(HKCU, 'Software\LemiCraft');
-    
-    MsgBox(
-      'Спасибо за использование LemiCraft Launcher!' + #13#10 + #13#10 +
-      'Будем рады видеть вас снова на сервере!' + #13#10 + #13#10 +
-      'Discord: https://discord.gg/ybC6QM8WTM', 
-      mbInformation, MB_OK);
   end;
 end;
 

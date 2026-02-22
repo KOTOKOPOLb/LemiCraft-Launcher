@@ -43,8 +43,8 @@ namespace LemiCraft_Launcher.Windows
 
         private void LoadVersionInfo()
         {
-            VersionText.Text = $"{AppVersion.Current} → {_version.Version}";
-            FileSizeText.Text = $"Размер: {FormatFileSize(_version.FileSize)}";
+            VersionText.Text = $"{AppVersion.Current}  →  {_version.Version}";
+            FileSizeText.Text = FormatFileSize(_version.FileSize);
             ReleaseDateText.Text = _version.ReleaseDate.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("ru-RU"));
             ChangelogList.ItemsSource = _version.Changelog;
 
@@ -56,20 +56,13 @@ namespace LemiCraft_Launcher.Windows
             }
         }
 
-        private string FormatFileSize(long bytes)
+        private static string FormatFileSize(long bytes)
         {
             if (bytes == 0) return "N/A";
-
             string[] sizes = { "B", "KB", "MB", "GB" };
             double len = bytes;
             int order = 0;
-
-            while (len >= 1024 && order < sizes.Length - 1)
-            {
-                order++;
-                len /= 1024;
-            }
-
+            while (len >= 1024 && order < sizes.Length - 1) { order++; len /= 1024; }
             return $"{len:0.#} {sizes[order]}";
         }
 
@@ -115,19 +108,35 @@ namespace LemiCraft_Launcher.Windows
             UpdateButton.IsEnabled = false;
             LaterButton.IsEnabled = false;
             CloseButtonTop.IsEnabled = false;
-            ProgressPanel.Visibility = Visibility.Visible;
 
-            ProgressPanel.Opacity = 0;
-            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
-            ProgressPanel.BeginAnimation(OpacityProperty, fadeIn);
-
-            var progress = new Progress<double>(value =>
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(180));
+            fadeOut.Completed += (_, _) =>
             {
-                Dispatcher.Invoke(() =>
+                ChangelogSection.Visibility = Visibility.Collapsed;
+                ProgressPanel.Visibility = Visibility.Visible;
+                ProgressPanel.Opacity = 0;
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+                ProgressPanel.BeginAnimation(OpacityProperty, fadeIn);
+            };
+            ChangelogSection.BeginAnimation(OpacityProperty, fadeOut);
+
+            var progress = new Progress<(double percent, long bytes)>(value =>
+            {
+                var (percent, bytes) = value;
+
+                if (percent < 0)
                 {
-                    DownloadProgress.Value = value;
-                    ProgressText.Text = $"Скачивание... {value:0}%";
-                });
+                    DownloadProgress.IsIndeterminate = true;
+                    ProgressText.Text = $"Скачивание... {FormatFileSize(bytes)}";
+                }
+                else
+                {
+                    DownloadProgress.IsIndeterminate = false;
+                    DownloadProgress.Value = percent;
+                    ProgressText.Text = percent < 100
+                        ? $"Скачивание... {percent:0}%"
+                        : "Запуск установщика...";
+                }
             });
 
             try
@@ -136,30 +145,30 @@ namespace LemiCraft_Launcher.Windows
 
                 if (result)
                 {
-                    // Успех - лаунчер перезапустится автоматически
-                    // UpdateService.DownloadLauncherUpdateAsync вызовет Application.Exit(0)
+                    ProgressText.Text = "Установка... Окно закроется автоматически";
+                    DownloadProgress.IsIndeterminate = true;
                 }
                 else
-                {
-                    CustomMessageBox.ShowError("Не удалось скачать обновление.\nПроверьте подключение к интернету");
-
-                    UpdateButton.IsEnabled = true;
-                    LaterButton.IsEnabled = true;
-                    CloseButtonTop.IsEnabled = !_version.IsRequired;
-                    ProgressPanel.Visibility = Visibility.Collapsed;
-                    _isUpdating = false;
-                }
+                    ShowError("Не удалось скачать обновление.\nПроверьте подключение к интернету");
             }
             catch (Exception ex)
             {
-                CustomMessageBox.ShowError($"Ошибка обновления: {ex.Message}");
-
-                UpdateButton.IsEnabled = true;
-                LaterButton.IsEnabled = true;
-                CloseButtonTop.IsEnabled = !_version.IsRequired;
-                ProgressPanel.Visibility = Visibility.Collapsed;
-                _isUpdating = false;
+                ShowError($"Ошибка обновления: {ex.Message}");
             }
+        }
+
+        private void ShowError(string message)
+        {
+            CustomMessageBox.ShowError(message);
+
+            ProgressPanel.Visibility = Visibility.Collapsed;
+            ChangelogSection.Visibility = Visibility.Visible;
+            ChangelogSection.Opacity = 1;
+
+            UpdateButton.IsEnabled = true;
+            LaterButton.IsEnabled = true;
+            CloseButtonTop.IsEnabled = !_version.IsRequired;
+            _isUpdating = false;
         }
     }
 }

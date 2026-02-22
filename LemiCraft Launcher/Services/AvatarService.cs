@@ -8,14 +8,15 @@ namespace LemiCraft_Launcher.Services
     public static class AvatarService
     {
         private static readonly HttpClient _httpClient = new();
-        
-        private static readonly string CacheDir = 
+
+        private static readonly string CacheDir =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft", "avatars");
 
         static AvatarService()
         {
             Directory.CreateDirectory(CacheDir);
         }
+
         public static async Task<string?> GetAvatarAsync(string nickname, bool use3D = true)
         {
             if (string.IsNullOrWhiteSpace(nickname))
@@ -72,12 +73,12 @@ namespace LemiCraft_Launcher.Services
             }
             catch { }
         }
+
         private static string GetCachedFileName(string nickname, bool use3D)
         {
-            using var md5 = MD5.Create();
-            var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(nickname.ToLower()));
+            var hash = MD5.HashData(Encoding.UTF8.GetBytes(nickname.ToLower()));
             var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
-            
+
             var type = use3D ? "3d" : "2d";
             return $"{hashString}_{type}.png";
         }

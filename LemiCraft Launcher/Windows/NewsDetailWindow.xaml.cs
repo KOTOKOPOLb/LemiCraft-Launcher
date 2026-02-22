@@ -1,5 +1,6 @@
 using LemiCraft_Launcher.Models;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -8,8 +9,6 @@ using System.Windows.Media.Animation;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using FontFamily = System.Windows.Media.FontFamily;
-using Point = System.Windows.Point;
-using Size = System.Windows.Size;
 
 namespace LemiCraft_Launcher.Windows
 {
@@ -18,6 +17,8 @@ namespace LemiCraft_Launcher.Windows
         private readonly NewsItem _news;
         private AnimationClock? _verticalScrollClock;
         private double _scrollTargetOffset = 0;
+
+        private static readonly Regex MentionTokenRegex = new(@"^@(?:\P{L}\P{N})*[\p{L}\p{N}_-]+(?=$|\s|\p{P})", RegexOptions.Compiled);
 
         public NewsDetailWindow(NewsItem news)
         {
@@ -100,11 +101,13 @@ namespace LemiCraft_Launcher.Windows
                 var isCodeBlock = false;
                 var codeLines = new List<string>();
 
+                var normalizedTitle = _news.Title.Trim().ToLowerInvariant();
+
                 foreach (var line in lines)
                 {
                     var trimmed = line.Trim();
 
-                    if (trimmed.StartsWith("```"))
+                    if (trimmed.StartsWith("```", StringComparison.Ordinal))
                     {
                         if (isCodeBlock)
                         {
@@ -130,29 +133,38 @@ namespace LemiCraft_Launcher.Windows
                         continue;
                     }
 
-                    if (trimmed.StartsWith("###"))
+                    if (trimmed.StartsWith("###", StringComparison.Ordinal))
                     {
+                        var headText = trimmed[3..].Trim();
+                        if (headText.ToLowerInvariant() == normalizedTitle) continue;
                         FlushParagraph(ref currentParagraph);
-                        AddHeader(trimmed.Substring(3).Trim(), 3);
+                        AddHeader(headText, 3);
                         continue;
                     }
-                    if (trimmed.StartsWith("##"))
+                    if (trimmed.StartsWith("##", StringComparison.Ordinal))
                     {
+                        var headText = trimmed[2..].Trim();
+                        if (headText.ToLowerInvariant() == normalizedTitle) continue;
                         FlushParagraph(ref currentParagraph);
-                        AddHeader(trimmed.Substring(2).Trim(), 2);
+                        AddHeader(headText, 2);
                         continue;
                     }
-                    if (trimmed.StartsWith("#"))
+                    if (trimmed.StartsWith('#') && !trimmed.StartsWith("##", StringComparison.Ordinal))
                     {
+                        var headText = trimmed[1..].Trim();
+                        if (headText.ToLowerInvariant() == normalizedTitle) continue;
                         FlushParagraph(ref currentParagraph);
-                        AddHeader(trimmed.Substring(1).Trim(), 1);
+                        AddHeader(headText, 1);
                         continue;
                     }
 
-                    if (trimmed.StartsWith(">"))
+                    if (trimmed.StartsWith(">", StringComparison.Ordinal) || trimmed.StartsWith("> ", StringComparison.Ordinal))
                     {
                         FlushParagraph(ref currentParagraph);
-                        AddBlockquote(trimmed.Substring(1).Trim());
+                        var quoteText = trimmed.StartsWith("> ", StringComparison.Ordinal)
+                            ? trimmed[2..]
+                            : trimmed[1..];
+                        AddBlockquote(quoteText.Trim());
                         continue;
                     }
 
@@ -189,7 +201,7 @@ namespace LemiCraft_Launcher.Windows
                 paragraph.FontSize = 14;
                 paragraph.Foreground = new SolidColorBrush(Color.FromRgb(229, 231, 235));
                 paragraph.LineHeight = 24;
-                paragraph.Margin = new Thickness(0, 0, 0, 16);
+                paragraph.Margin = new Thickness(0, 0, 0, 12);
                 MarkdownDocument.Blocks.Add(paragraph);
                 paragraph = new Paragraph();
             }
@@ -197,7 +209,7 @@ namespace LemiCraft_Launcher.Windows
 
         private void AddHeader(string text, int level)
         {
-            var para = new Paragraph(new Run(text));
+            var para = new Paragraph();
 
             switch (level)
             {
@@ -219,6 +231,7 @@ namespace LemiCraft_Launcher.Windows
             }
 
             para.Foreground = Brushes.White;
+            AddFormattedText(para, text);
             MarkdownDocument.Blocks.Add(para);
         }
 
@@ -231,8 +244,8 @@ namespace LemiCraft_Launcher.Windows
                 FontSize = 13,
                 Foreground = new SolidColorBrush(Color.FromRgb(230, 238, 243)),
                 Background = new SolidColorBrush(Color.FromRgb(7, 16, 32)),
-                Padding = new Thickness(16),
-                Margin = new Thickness(0, 8, 0, 16)
+                Padding = new Thickness(14),
+                Margin = new Thickness(0, 6, 0, 12)
             };
             MarkdownDocument.Blocks.Add(para);
         }
@@ -243,11 +256,11 @@ namespace LemiCraft_Launcher.Windows
             AddFormattedText(para, text);
 
             para.FontSize = 14;
-            para.Foreground = new SolidColorBrush(Color.FromRgb(156, 163, 175));
+            para.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
             para.BorderBrush = new SolidColorBrush(Color.FromRgb(55, 65, 81));
             para.BorderThickness = new Thickness(3, 0, 0, 0);
-            para.Padding = new Thickness(16, 8, 16, 8);
-            para.Margin = new Thickness(0, 8, 0, 16);
+            para.Padding = new Thickness(14, 6, 14, 6);
+            para.Margin = new Thickness(0, 4, 0, 12);
 
             MarkdownDocument.Blocks.Add(para);
         }
@@ -259,6 +272,32 @@ namespace LemiCraft_Launcher.Windows
 
             foreach (var (partText, style) in parts)
             {
+                if (style == TextStyle.None && partText.StartsWith('@') && partText.Length > 1)
+                {
+                    var m = MentionTokenRegex.Match(partText);
+                    if (m.Success)
+                    {
+                        var mentionRun = new Run(m.Value)
+                        {
+                            Background = new SolidColorBrush(Color.FromArgb(50, 88, 101, 242)),
+                            Foreground = new SolidColorBrush(Color.FromRgb(147, 157, 255))
+                        };
+                        paragraph.Inlines.Add(mentionRun);
+
+                        if (m.Length < partText.Length)
+                        {
+                            var rest = partText.Substring(m.Length);
+                            var restRun = new Run(rest)
+                            {
+                                Foreground = new SolidColorBrush(Color.FromRgb(229, 231, 235))
+                            };
+                            paragraph.Inlines.Add(restRun);
+                        }
+
+                        continue;
+                    }
+                }
+
                 var run = new Run(partText);
 
                 if (style.HasFlag(TextStyle.Bold))
@@ -273,7 +312,7 @@ namespace LemiCraft_Launcher.Windows
                 if (style.HasFlag(TextStyle.Code))
                 {
                     run.FontFamily = new FontFamily("Consolas, Courier New");
-                    run.Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 255));
+                    run.Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 255));
                     run.Foreground = new SolidColorBrush(Color.FromRgb(230, 238, 243));
                 }
 
@@ -287,27 +326,20 @@ namespace LemiCraft_Launcher.Windows
             }
         }
 
-        private void ProcessInlineFormatting(string text, List<(string text, TextStyle style)> parts)
+        private static void ProcessInlineFormatting(string text, List<(string text, TextStyle style)> parts)
         {
             var current = "";
-            var currentStyle = TextStyle.None;
             var i = 0;
 
             while (i < text.Length)
             {
                 if (i < text.Length - 1 && text[i] == '|' && text[i + 1] == '|')
                 {
-                    if (current.Length > 0)
-                    {
-                        parts.Add((current, currentStyle));
-                        current = "";
-                    }
-
-                    var end = text.IndexOf("||", i + 2);
+                    if (current.Length > 0) { parts.Add((current, TextStyle.None)); current = ""; }
+                    var end = text.IndexOf("||", i + 2, StringComparison.Ordinal);
                     if (end != -1)
                     {
-                        var spoilerText = text.Substring(i + 2, end - i - 2);
-                        parts.Add((spoilerText, TextStyle.Spoiler));
+                        parts.Add((text[(i + 2)..end], TextStyle.Spoiler));
                         i = end + 2;
                         continue;
                     }
@@ -315,35 +347,23 @@ namespace LemiCraft_Launcher.Windows
 
                 if (i < text.Length - 1 && text[i] == '*' && text[i + 1] == '*')
                 {
-                    if (current.Length > 0)
-                    {
-                        parts.Add((current, currentStyle));
-                        current = "";
-                    }
-
-                    var end = text.IndexOf("**", i + 2);
+                    if (current.Length > 0) { parts.Add((current, TextStyle.None)); current = ""; }
+                    var end = text.IndexOf("**", i + 2, StringComparison.Ordinal);
                     if (end != -1)
                     {
-                        var boldText = text.Substring(i + 2, end - i - 2);
-                        parts.Add((boldText, TextStyle.Bold));
+                        parts.Add((text[(i + 2)..end], TextStyle.Bold));
                         i = end + 2;
                         continue;
                     }
                 }
 
-                if (text[i] == '*')
+                if (text[i] == '*' && (i == 0 || text[i - 1] != '*') && (i + 1 >= text.Length || text[i + 1] != '*'))
                 {
-                    if (current.Length > 0)
-                    {
-                        parts.Add((current, currentStyle));
-                        current = "";
-                    }
-
+                    if (current.Length > 0) { parts.Add((current, TextStyle.None)); current = ""; }
                     var end = text.IndexOf('*', i + 1);
                     if (end != -1)
                     {
-                        var italicText = text.Substring(i + 1, end - i - 1);
-                        parts.Add((italicText, TextStyle.Italic));
+                        parts.Add((text[(i + 1)..end], TextStyle.Italic));
                         i = end + 1;
                         continue;
                     }
@@ -351,17 +371,11 @@ namespace LemiCraft_Launcher.Windows
 
                 if (i < text.Length - 1 && text[i] == '~' && text[i + 1] == '~')
                 {
-                    if (current.Length > 0)
-                    {
-                        parts.Add((current, currentStyle));
-                        current = "";
-                    }
-
-                    var end = text.IndexOf("~~", i + 2);
+                    if (current.Length > 0) { parts.Add((current, TextStyle.None)); current = ""; }
+                    var end = text.IndexOf("~~", i + 2, StringComparison.Ordinal);
                     if (end != -1)
                     {
-                        var strikeText = text.Substring(i + 2, end - i - 2);
-                        parts.Add((strikeText, TextStyle.Strikethrough));
+                        parts.Add((text[(i + 2)..end], TextStyle.Strikethrough));
                         i = end + 2;
                         continue;
                     }
@@ -369,17 +383,11 @@ namespace LemiCraft_Launcher.Windows
 
                 if (text[i] == '`')
                 {
-                    if (current.Length > 0)
-                    {
-                        parts.Add((current, currentStyle));
-                        current = "";
-                    }
-
+                    if (current.Length > 0) { parts.Add((current, TextStyle.None)); current = ""; }
                     var end = text.IndexOf('`', i + 1);
                     if (end != -1)
                     {
-                        var codeText = text.Substring(i + 1, end - i - 1);
-                        parts.Add((codeText, TextStyle.Code));
+                        parts.Add((text[(i + 1)..end], TextStyle.Code));
                         i = end + 1;
                         continue;
                     }
@@ -390,9 +398,7 @@ namespace LemiCraft_Launcher.Windows
             }
 
             if (current.Length > 0)
-            {
-                parts.Add((current, currentStyle));
-            }
+                parts.Add((current, TextStyle.None));
         }
 
         [Flags]
@@ -406,17 +412,14 @@ namespace LemiCraft_Launcher.Windows
             Spoiler = 16
         }
 
-        private string GetCategoryText(NewsCategory category)
+        private static string GetCategoryText(NewsCategory category) => category switch
         {
-            return category switch
-            {
-                NewsCategory.Update => "Обновление",
-                NewsCategory.Event => "Ивент",
-                NewsCategory.Announcement => "Объявление",
-                NewsCategory.Maintenance => "Тех. работы",
-                _ => "Общее"
-            };
-        }
+            NewsCategory.Update => "Обновление",
+            NewsCategory.Event => "Ивент",
+            NewsCategory.Announcement => "Объявление",
+            NewsCategory.Maintenance => "Тех. работы",
+            _ => "Общее"
+        };
 
         private void SetCategoryColor(NewsCategory category)
         {
@@ -532,7 +535,6 @@ namespace LemiCraft_Launcher.Windows
             clock.Controller?.Begin();
         }
 
-
         private void MarkdownViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             e.Handled = true;
@@ -543,39 +545,6 @@ namespace LemiCraft_Launcher.Windows
         {
             e.Handled = true;
             SmoothAnimatedScroll(e.Delta);
-        }
-
-
-        private void ImageContainer_Loaded(object sender, RoutedEventArgs e)
-        {
-            if (sender is FrameworkElement fe)
-                UpdateTopCornersClip(fe, 12);
-        }
-
-        private void ImageContainer_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (sender is FrameworkElement fe)
-                UpdateTopCornersClip(fe, 12);
-        }
-
-        private void UpdateTopCornersClip(FrameworkElement element, double radius)
-        {
-            double w = Math.Max(0, element.ActualWidth);
-            double h = Math.Max(0, element.ActualHeight);
-            if (w == 0 || h == 0) return;
-
-            var geometry = new StreamGeometry();
-            using (var ctx = geometry.Open())
-            {
-                ctx.BeginFigure(new Point(0, radius), true, true);
-                ctx.ArcTo(new Point(radius, 0), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, false);
-                ctx.LineTo(new Point(w - radius, 0), true, false);
-                ctx.ArcTo(new Point(w, radius), new Size(radius, radius), 0, false, SweepDirection.Clockwise, true, false);
-                ctx.LineTo(new Point(w, h), true, false);
-                ctx.LineTo(new Point(0, h), true, false);
-            }
-            geometry.Freeze();
-            element.Clip = geometry;
         }
 
         private void UpdateFades()

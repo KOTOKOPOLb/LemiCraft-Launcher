@@ -1,4 +1,4 @@
-using CmlLib.Core;
+п»їusing CmlLib.Core;
 using CmlLib.Core.Auth;
 using CmlLib.Core.ModLoaders.FabricMC;
 using CmlLib.Core.ProcessBuilder;
@@ -46,7 +46,7 @@ namespace LemiCraft_Launcher.Services
                 _cachedLauncher = new MinecraftLauncher(path);
                 _cachedGameDir = currentGameDir;
 
-                Debug.WriteLine($"Создан новый MinecraftLauncher для: {currentGameDir}");
+                Debug.WriteLine($"РЎРѕР·РґР°РЅ РЅРѕРІС‹Р№ MinecraftLauncher РґР»СЏ: {currentGameDir}");
             }
 
             return _cachedLauncher;
@@ -56,7 +56,7 @@ namespace LemiCraft_Launcher.Services
         {
             _cachedLauncher = null;
             _cachedGameDir = null;
-            Debug.WriteLine("Кэш MinecraftLauncher сброшен");
+            Debug.WriteLine("РљСЌС€ MinecraftLauncher СЃР±СЂРѕС€РµРЅ");
         }
 
         public static async Task<bool> IsInstalledAsync()
@@ -69,16 +69,16 @@ namespace LemiCraft_Launcher.Services
 
                 var isInstalled = versions.Any(v => v.Name == fabricVersion) && File.Exists(GetAuthlibPath());
 
-                Debug.WriteLine($"Проверка установки: {isInstalled}");
-                Debug.WriteLine($"Fabric версия: {fabricVersion}");
-                Debug.WriteLine($"Authlib путь: {GetAuthlibPath()}");
-                Debug.WriteLine($"Найдено версий: {versions.Count()}");
+                Debug.WriteLine($"РџСЂРѕРІРµСЂРєР° СѓСЃС‚Р°РЅРѕРІРєРё: {isInstalled}");
+                Debug.WriteLine($"Fabric РІРµСЂСЃРёСЏ: {fabricVersion}");
+                Debug.WriteLine($"Authlib РїСѓС‚СЊ: {GetAuthlibPath()}");
+                Debug.WriteLine($"РќР°Р№РґРµРЅРѕ РІРµСЂСЃРёР№: {versions.Count()}");
 
                 return isInstalled;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка проверки установки: {ex.Message}");
+                Debug.WriteLine($"РћС€РёР±РєР° РїСЂРѕРІРµСЂРєРё СѓСЃС‚Р°РЅРѕРІРєРё: {ex.Message}");
                 return false;
             }
         }
@@ -90,21 +90,21 @@ namespace LemiCraft_Launcher.Services
             try
             {
                 var gameDir = GetGameDir();
-                Debug.WriteLine($"Установка Minecraft в: {gameDir}");
+                Debug.WriteLine($"РЈСЃС‚Р°РЅРѕРІРєР° Minecraft РІ: {gameDir}");
 
                 Directory.CreateDirectory(gameDir);
 
                 var launcher = GetLauncher();
 
-                progress.Task = "Проверка Java...";
+                progress.Task = "РџСЂРѕРІРµСЂРєР° Java...";
                 ProgressChanged?.Invoke(progress);
 
-                progress.Task = "Загрузка Minecraft...";
+                progress.Task = "Р—Р°РіСЂСѓР·РєР° Minecraft...";
                 ProgressChanged?.Invoke(progress);
 
                 launcher.FileProgressChanged += (s, e) =>
                 {
-                    progress.Task = $"Загрузка: {e.Name}";
+                    progress.Task = $"Р—Р°РіСЂСѓР·РєР°: {e.Name}";
                     progress.TotalFiles = e.TotalTasks;
                     progress.CompletedFiles = e.ProgressedTasks;
                     ProgressChanged?.Invoke(progress);
@@ -119,7 +119,7 @@ namespace LemiCraft_Launcher.Services
 
                 await launcher.InstallAsync(MC_VERSION);
 
-                progress.Task = "Установка Fabric...";
+                progress.Task = "РЈСЃС‚Р°РЅРѕРІРєР° Fabric...";
                 ProgressChanged?.Invoke(progress);
 
                 var fabricInstaller = new FabricInstaller(_httpClient);
@@ -130,30 +130,32 @@ namespace LemiCraft_Launcher.Services
                 Directory.CreateDirectory(Path.Combine(gameDir, "resourcepacks"));
                 Directory.CreateDirectory(Path.Combine(gameDir, "shaderpacks"));
 
-                progress.Task = "Загрузка authlib-injector...";
+                progress.Task = "Р—Р°РіСЂСѓР·РєР° authlib-injector...";
                 ProgressChanged?.Invoke(progress);
 
-                await DownloadAuthlibAsync();
+                var authlibSuccess = await DownloadAuthlibAsync();
+                if (!authlibSuccess)
+                    Debug.WriteLine("вљ пёЏ authlib-injector РЅРµ СЃРєР°С‡Р°РЅ вЂ” Ely.by Р°РІС‚РѕСЂРёР·Р°С†РёСЏ РЅРµ Р±СѓРґРµС‚ СЂР°Р±РѕС‚Р°С‚СЊ");
 
-                progress.Task = "Установка завершена!";
+                progress.Task = "РЈСЃС‚Р°РЅРѕРІРєР° Р·Р°РІРµСЂС€РµРЅР°!";
                 progress.CompletedFiles = progress.TotalFiles;
                 ProgressChanged?.Invoke(progress);
 
                 ResetLauncherCache();
 
-                Debug.WriteLine("Установка Minecraft завершена успешно!");
+                Debug.WriteLine("РЈСЃС‚Р°РЅРѕРІРєР° Minecraft Р·Р°РІРµСЂС€РµРЅР° СѓСЃРїРµС€РЅРѕ!");
             }
             catch (Exception ex)
             {
-                progress.Task = $"Ошибка: {ex.Message}";
+                progress.Task = $"РћС€РёР±РєР°: {ex.Message}";
                 ProgressChanged?.Invoke(progress);
-                Debug.WriteLine($"Ошибка установки: {ex.Message}");
+                Debug.WriteLine($"РћС€РёР±РєР° СѓСЃС‚Р°РЅРѕРІРєРё: {ex.Message}");
                 Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 throw;
             }
         }
 
-        private static async Task DownloadAuthlibAsync()
+        private static async Task<bool> DownloadAuthlibAsync()
         {
             try
             {
@@ -165,7 +167,7 @@ namespace LemiCraft_Launcher.Services
                 if (!resp.IsSuccessStatusCode)
                 {
                     Debug.WriteLine($"GitHub API error: {resp.StatusCode}");
-                    return;
+                    return false;
                 }
 
                 using var stream = await resp.Content.ReadAsStreamAsync();
@@ -173,12 +175,12 @@ namespace LemiCraft_Launcher.Services
 
                 if (!doc.RootElement.TryGetProperty("tag_name", out var tagElem))
                 {
-                    Debug.WriteLine("Не удалось получить tag_name");
-                    return;
+                    Debug.WriteLine("РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ tag_name");
+                    return false;
                 }
 
                 var tag = tagElem.GetString() ?? "";
-                var shortTag = tag.StartsWith("v") ? tag.Substring(1) : tag;
+                var shortTag = tag.StartsWith('v') ? tag[1..] : tag;
 
                 var candidateUrl = $"https://github.com/yushijinhun/authlib-injector/releases/download/{tag}/authlib-injector-{shortTag}.jar";
 
@@ -189,8 +191,8 @@ namespace LemiCraft_Launcher.Services
                     var authlibPath = GetAuthlibPath();
                     Directory.CreateDirectory(Path.GetDirectoryName(authlibPath)!);
                     await File.WriteAllBytesAsync(authlibPath, bytes);
-                    Debug.WriteLine($"Authlib скачан: {authlibPath}");
-                    return;
+                    Debug.WriteLine($"Authlib СЃРєР°С‡Р°РЅ: {authlibPath}");
+                    return true;
                 }
 
                 if (doc.RootElement.TryGetProperty("assets", out var assets))
@@ -212,24 +214,26 @@ namespace LemiCraft_Launcher.Services
                                     var authlibPath = GetAuthlibPath();
                                     Directory.CreateDirectory(Path.GetDirectoryName(authlibPath)!);
                                     await File.WriteAllBytesAsync(authlibPath, bytes);
-                                    Debug.WriteLine($"Authlib скачан через assets: {authlibPath}");
-                                    return;
+                                    Debug.WriteLine($"Authlib СЃРєР°С‡Р°РЅ С‡РµСЂРµР· assets: {authlibPath}");
+                                    return true;
                                 }
                             }
                         }
                     }
                 }
 
-                Debug.WriteLine("Не удалось скачать authlib-injector");
+                Debug.WriteLine("РќРµ СѓРґР°Р»РѕСЃСЊ СЃРєР°С‡Р°С‚СЊ authlib-injector");
+                return false;
             }
             catch (HttpRequestException ex)
             {
                 Debug.WriteLine($"Authlib download failed: {ex.Message}");
-                Debug.WriteLine("Launcher will work without Ely.by support");
+                return false;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Unexpected error downloading authlib: {ex.Message}");
+                return false;
             }
         }
 
@@ -238,14 +242,14 @@ namespace LemiCraft_Launcher.Services
             try
             {
                 var gameDir = GetGameDir();
-                Debug.WriteLine($"Запуск Minecraft из: {gameDir}");
+                Debug.WriteLine($"Р—Р°РїСѓСЃРє Minecraft РёР·: {gameDir}");
 
                 var launcher = GetLauncher();
 
                 await launcher.GetAllVersionsAsync();
 
                 var fabricVersion = FabricInstaller.GetVersionName(MC_VERSION, FABRIC_LOADER);
-                Debug.WriteLine($"Используем версию: {fabricVersion}");
+                Debug.WriteLine($"РСЃРїРѕР»СЊР·СѓРµРј РІРµСЂСЃРёСЋ: {fabricVersion}");
 
                 var session = new MSession
                 {
@@ -269,23 +273,23 @@ namespace LemiCraft_Launcher.Services
                 if (profile.Provider == "Ely.by" && File.Exists(authlibPath))
                 {
                     jvmArgs.Add($"-javaagent:{authlibPath}=https://authserver.ely.by/api/authlib-injector");
-                    Debug.WriteLine("Используется Ely.by authlib");
+                    Debug.WriteLine("РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Ely.by authlib");
                 }
 
-                if (jvmArgs.Any())
+                if (jvmArgs.Count > 0)
                     options.ExtraJvmArguments = jvmArgs.Select(a => new MArgument(a)).ToArray();
 
-                if (!string.IsNullOrWhiteSpace(config.JavaPath) && config.JavaPath != "Автоопределение")
+                if (!string.IsNullOrWhiteSpace(config.JavaPath) && config.JavaPath != "РђРІС‚РѕРѕРїСЂРµРґРµР»РµРЅРёРµ")
                 {
                     options.JavaPath = config.JavaPath;
-                    Debug.WriteLine($"Используется Java: {config.JavaPath}");
+                    Debug.WriteLine($"РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Java: {config.JavaPath}");
                 }
 
                 if (config.AutoConnect)
                 {
                     options.ServerIp = "lemicraft.ru";
                     options.ServerPort = 25565;
-                    Debug.WriteLine("Автоподключение к серверу включено");
+                    Debug.WriteLine("РђРІС‚РѕРїРѕРґРєР»СЋС‡РµРЅРёРµ Рє СЃРµСЂРІРµСЂСѓ РІРєР»СЋС‡РµРЅРѕ");
                 }
 
                 Debug.WriteLine($"RAM: {config.RamGb} GB");
@@ -293,12 +297,12 @@ namespace LemiCraft_Launcher.Services
 
                 var process = await launcher.InstallAndBuildProcessAsync(fabricVersion, options);
 
-                Debug.WriteLine("Minecraft процесс запущен успешно!");
+                Debug.WriteLine("Minecraft РїСЂРѕС†РµСЃСЃ Р·Р°РїСѓС‰РµРЅ СѓСЃРїРµС€РЅРѕ!");
                 return process;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Ошибка запуска Minecraft: {ex.Message}");
+                Debug.WriteLine($"РћС€РёР±РєР° Р·Р°РїСѓСЃРєР° Minecraft: {ex.Message}");
                 Debug.WriteLine($"StackTrace: {ex.StackTrace}");
                 throw;
             }

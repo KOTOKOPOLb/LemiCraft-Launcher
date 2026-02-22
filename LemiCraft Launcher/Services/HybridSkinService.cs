@@ -10,6 +10,8 @@ namespace LemiCraft_Launcher.Services
 {
     public static class HybridSkinService
     {
+        private static readonly HttpClient _httpClient = new();
+
         public static async Task<List<SkinLibraryItem>?> GetUserSkinsAsync(
             UserProfile profile,
             bool forceRefresh = false)
@@ -95,8 +97,7 @@ namespace LemiCraft_Launcher.Services
 
                 var body = new { elybyId, username, skinUrl, model };
 
-                var httpClient = new HttpClient();
-                var response = await httpClient.PostAsJsonAsync(url, body);
+                var response = await _httpClient.PostAsJsonAsync(url, body);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -189,7 +190,7 @@ namespace LemiCraft_Launcher.Services
                     Identity = profile.ElybyIdentity
                 };
 
-                var isSlim = model.ToLower() == "alex";
+                var isSlim = string.Equals(model, "alex", StringComparison.OrdinalIgnoreCase);
 
                 Debug.WriteLine("📤 Step 1/3: Uploading file to our server (elyby folder)...");
                 var ourFileUrl = await UploadFileToOurServerAsync(filePath, provider: "elyby");
@@ -252,10 +253,10 @@ namespace LemiCraft_Launcher.Services
                 var boundary = "----LemiBoundary" + Guid.NewGuid().ToString("N");
 
                 var handler = new SocketsHttpHandler();
-                using var httpClient = new HttpClient(handler);
-                httpClient.Timeout = TimeSpan.FromSeconds(30);
-                httpClient.DefaultRequestHeaders.ExpectContinue = false;
-                httpClient.DefaultRequestVersion = HttpVersion.Version11;
+                using var uploadClient = new HttpClient(handler);
+                uploadClient.Timeout = TimeSpan.FromSeconds(30);
+                uploadClient.DefaultRequestHeaders.ExpectContinue = false;
+                uploadClient.DefaultRequestVersion = HttpVersion.Version11;
 
                 using var fileStream = File.OpenRead(filePath);
                 Debug.WriteLine($"📦 File size: {fileStream.Length} bytes");
@@ -266,7 +267,6 @@ namespace LemiCraft_Launcher.Services
                 streamContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
 
                 content.Add(streamContent, "file", Path.GetFileName(filePath));
-
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse($"multipart/form-data; boundary={boundary}");
 
                 var request = new HttpRequestMessage(HttpMethod.Post, url)
@@ -277,7 +277,7 @@ namespace LemiCraft_Launcher.Services
                 request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
 
                 Debug.WriteLine("📤 Sending multipart request...");
-                var response = await httpClient.SendAsync(request);
+                var response = await uploadClient.SendAsync(request);
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 Debug.WriteLine($"📥 Response status: {response.StatusCode}");
@@ -316,8 +316,7 @@ namespace LemiCraft_Launcher.Services
                     model
                 };
 
-                var httpClient = new HttpClient();
-                var response = await httpClient.PostAsJsonAsync(url, body);
+                var response = await _httpClient.PostAsJsonAsync(url, body);
 
                 if (response.IsSuccessStatusCode)
                     Debug.WriteLine($"✅ Synced Ely.by skin #{elybyId} to database with our URL");

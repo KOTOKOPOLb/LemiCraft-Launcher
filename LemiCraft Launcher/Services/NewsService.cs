@@ -3,15 +3,33 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace LemiCraft_Launcher.Services
 {
-    public static class NewsService
+    public static partial class NewsService
     {
         private static readonly HttpClient _httpClient = new();
         private static readonly string DataDir =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LemiCraft");
         private static readonly string CacheFilePath = Path.Combine(DataDir, "news_cache.json");
+
+        private static readonly JsonSerializerOptions _readOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        };
+        private static readonly JsonSerializerOptions _writeOptions = new()
+        {
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        };
+
+        [GeneratedRegex(@"\*\*|__|~~|`")]
+        private static partial Regex MarkdownSymbolsRegex();
+
+        [GeneratedRegex(@"#(\w+)")]
+        private static partial Regex TagsRegex();
 
         private static string NEWS_API_URL =>
             $"{ConfigService.Load().ApiBaseUrl}/launcher/news";
@@ -45,7 +63,7 @@ namespace LemiCraft_Launcher.Services
                 System.Diagnostics.Debug.WriteLine($"Ошибка загрузки новостей: {ex.Message}");
 
                 var cached = LoadFromCache();
-                return cached?.Items ?? new List<NewsItem>();
+                return cached?.Items ?? [];
             }
         }
 
@@ -54,21 +72,15 @@ namespace LemiCraft_Launcher.Services
             var url = BuildApiUrl(filter);
             var response = await _httpClient.GetStringAsync(url);
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-            };
-
-            var apiResponse = JsonSerializer.Deserialize<NewsApiResponse>(response, options);
+            var apiResponse = JsonSerializer.Deserialize<NewsApiResponse>(response, _readOptions);
 
             if (apiResponse == null || !apiResponse.Success)
             {
                 System.Diagnostics.Debug.WriteLine("API вернул success=false");
-                return new List<NewsItem>();
+                return [];
             }
 
-            return apiResponse.Items ?? new List<NewsItem>();
+            return apiResponse.Items ?? [];
         }
 
         private static string BuildApiUrl(NewsFilter? filter)
@@ -134,12 +146,7 @@ namespace LemiCraft_Launcher.Services
                     return null;
 
                 var json = File.ReadAllText(CacheFilePath);
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-                };
-                return JsonSerializer.Deserialize<NewsCacheData>(json, options);
+                return JsonSerializer.Deserialize<NewsCacheData>(json, _readOptions);
             }
             catch
             {
@@ -152,16 +159,10 @@ namespace LemiCraft_Launcher.Services
             try
             {
                 Directory.CreateDirectory(DataDir);
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-                };
-                var json = JsonSerializer.Serialize(cache, options);
+                var json = JsonSerializer.Serialize(cache, _writeOptions);
                 File.WriteAllText(CacheFilePath, json);
             }
-            catch
-            { }
+            catch { }
         }
 
         public static void ClearCache()
@@ -171,8 +172,7 @@ namespace LemiCraft_Launcher.Services
                 if (File.Exists(CacheFilePath))
                     File.Delete(CacheFilePath);
             }
-            catch
-            { }
+            catch { }
         }
 
         public static async Task<NewsItem?> GetNewsByIdAsync(string id)
@@ -190,12 +190,7 @@ namespace LemiCraft_Launcher.Services
                 var url = $"{NEWS_API_URL}/{id}";
                 var response = await _httpClient.GetStringAsync(url);
 
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-                };
-                return JsonSerializer.Deserialize<NewsItem>(response, options);
+                return JsonSerializer.Deserialize<NewsItem>(response, _readOptions);
             }
             catch
             {
@@ -205,24 +200,24 @@ namespace LemiCraft_Launcher.Services
 
         public static string GetPreview(string content, int maxLength = 150)
         {
-            var preview = System.Text.RegularExpressions.Regex.Replace(content, @"\*\*|__|~~|`", "");
+            var preview = MarkdownSymbolsRegex().Replace(content, "");
 
             if (preview.Length > maxLength)
-                preview = preview.Substring(0, maxLength) + "...";
+                preview = preview[..maxLength] + "...";
 
             return preview;
         }
 
         public static List<string> ExtractTags(string content)
         {
-            var regex = new System.Text.RegularExpressions.Regex(@"#(\w+)");
-            var matches = regex.Matches(content);
+            var matches = TagsRegex().Matches(content);
             return matches.Select(m => m.Groups[1].Value).Distinct().ToList();
         }
+
         private class NewsApiResponse
         {
             public bool Success { get; set; }
-            public List<NewsItem> Items { get; set; } = new();
+            public List<NewsItem> Items { get; set; } = [];
             public int Total { get; set; }
         }
     }

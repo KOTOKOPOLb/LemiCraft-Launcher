@@ -16,8 +16,10 @@ namespace LemiCraft_Launcher.Services
             "Skins"
         );
 
-        private static Dictionary<string, CachedSkinsData> _skinsCache = new();
+        private static readonly Dictionary<string, CachedSkinsData> _skinsCache = [];
         private static readonly TimeSpan _cacheLifetime = TimeSpan.FromMinutes(5);
+
+        private static readonly JsonSerializerOptions _writeOptions = new() { WriteIndented = true };
 
         static SkinCacheService()
         {
@@ -80,10 +82,7 @@ namespace LemiCraft_Launcher.Services
                 };
 
                 var cacheFile = Path.Combine(_cacheDir, $"{username}_skins.json");
-                var json = JsonSerializer.Serialize(skins, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
+                var json = JsonSerializer.Serialize(skins, _writeOptions);
                 await File.WriteAllTextAsync(cacheFile, json);
 
                 Debug.WriteLine($"💾 Saved {skins.Count} skins to cache for {username}");
@@ -208,7 +207,7 @@ namespace LemiCraft_Launcher.Services
 
         private class CachedSkinsData
         {
-            public List<SkinLibraryItem> Skins { get; set; } = new();
+            public List<SkinLibraryItem> Skins { get; set; } = [];
             public DateTime CachedAt { get; set; }
         }
     }
