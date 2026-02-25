@@ -277,7 +277,7 @@ namespace LemiCraft_Launcher.Services
 
                     foreach (var entry in archive.Entries)
                     {
-                        var shouldExtract = ShouldExtractEntry(entry.FullName, updateType);
+                        var shouldExtract = ShouldExtractEntry(entry.FullName, updateType, gameDir);
 
                         if (shouldExtract)
                         {
@@ -320,7 +320,7 @@ namespace LemiCraft_Launcher.Services
             }
         }
 
-        private static bool ShouldExtractEntry(string entryPath, ModpackUpdateType updateType)
+        private static bool ShouldExtractEntry(string entryPath, ModpackUpdateType updateType, string gameDir)
         {
             var normalizedPath = entryPath.Replace('\\', '/').ToLowerInvariant();
 
@@ -336,9 +336,11 @@ namespace LemiCraft_Launcher.Services
 
                 case ModpackUpdateType.Full:
                 default:
+                    if (normalizedPath == "options.txt")
+                        return !File.Exists(Path.Combine(gameDir, "options.txt"));
+
                     return !normalizedPath.StartsWith("backups/") &&
                            !normalizedPath.Contains("/saves/") &&
-                           normalizedPath != "options.txt" &&
                            normalizedPath != "servers.dat";
             }
         }
