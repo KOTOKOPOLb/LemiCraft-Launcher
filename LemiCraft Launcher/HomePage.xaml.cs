@@ -108,7 +108,7 @@ namespace LemiCraft_Launcher
 
         private async Task UpdateServerStatus()
         {
-            var status = await MineStatClient.PingAsync("lemicraft.ru", 25565, 4000);
+            var status = await MineStatClient.PingAsync("lemicraft.ru");
 
             if (status == null)
             {
@@ -128,7 +128,7 @@ namespace LemiCraft_Launcher
 
         private void WikiButton_Click(object sender, RoutedEventArgs e) => OpenUrl("https://wiki.lemicraft.ru");
 
-        private void DiscordButton_Click(object sender, RoutedEventArgs e) => OpenUrl("https://discord.gg/ybC6QM8WTM");
+        private void MineDirButton_Click(object sender, RoutedEventArgs e) => Process.Start(new ProcessStartInfo{ FileName = ConfigService.Load().GamePath, UseShellExecute = true });
 
         private static void OpenUrl(string url)
         {

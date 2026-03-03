@@ -18,11 +18,24 @@ namespace LemiCraft_Launcher.Services
 
     public static class MineStatClient
     {
-        public static async Task<ServerStatus?> PingAsync(string host, int port = 25565, int timeoutMs = 5000)
+        public static async Task<ServerStatus?> PingAsync(string host, int port = 25565, int timeoutMs = 5000, bool resolveSrv = true)
         {
             using var cts = new CancellationTokenSource(timeoutMs);
+            string originalHost = host;
             try
             {
+                if (resolveSrv)
+                {
+                    var srv = await ResolveMinecraftSrvAsync(host);
+                    if (srv != null)
+                    {
+                        host = srv.Value.host;
+                        port = srv.Value.port;
+                    }
+                    else
+                        Debug.WriteLine("No SRV record found; using provided host/port");
+                }
+
                 using var client = new TcpClient();
                 await client.ConnectAsync(host, port).WaitAsync(cts.Token);
 
@@ -33,7 +46,7 @@ namespace LemiCraft_Launcher.Services
                 var handshakePayload = new List<byte>();
                 handshakePayload.AddRange(WriteVarInt(0));
                 handshakePayload.AddRange(WriteVarInt(754));
-                var hostBytes = Encoding.UTF8.GetBytes(host);
+                var hostBytes = Encoding.UTF8.GetBytes(originalHost);
                 handshakePayload.AddRange(WriteVarInt(hostBytes.Length));
                 handshakePayload.AddRange(hostBytes);
                 handshakePayload.Add((byte)(port >> 8));
@@ -41,7 +54,7 @@ namespace LemiCraft_Launcher.Services
                 handshakePayload.AddRange(WriteVarInt(1));
 
                 await WritePacketAsync(stream, handshakePayload.ToArray(), cts.Token);
-                await WritePacketAsync(stream, new byte[] { 0x00 }, cts.Token);
+                await WritePacketAsync(stream, [0x00], cts.Token);
 
                 var sw = Stopwatch.StartNew();
 
@@ -83,6 +96,23 @@ namespace LemiCraft_Launcher.Services
             {
                 return null;
             }
+        }
+
+        private static async Task<(string host, int port)?> ResolveMinecraftSrvAsync(string host)
+        {
+            try
+            {
+                var lookup = new DnsClient.LookupClient();
+                var res = await lookup.QueryAsync($"_minecraft._tcp.{host}", DnsClient.QueryType.SRV);
+                var srv = res.Answers.SrvRecords().FirstOrDefault();
+                if (srv != null)
+                {
+                    var target = srv.Target.Value.TrimEnd('.');
+                    return (target, srv.Port);
+                }
+            }
+            catch { }
+            return null;
         }
 
         private static byte[] WriteVarInt(int value)

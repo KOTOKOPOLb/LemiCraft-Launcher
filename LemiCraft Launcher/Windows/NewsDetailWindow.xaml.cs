@@ -19,6 +19,7 @@ namespace LemiCraft_Launcher.Windows
         private double _scrollTargetOffset = 0;
 
         private static readonly Regex MentionTokenRegex = new(@"^@(?:\P{L}\P{N})*[\p{L}\p{N}_-]+(?=$|\s|\p{P})", RegexOptions.Compiled);
+        private static readonly Regex DiscordTimestampRegex = new(@"<t:(\d+)(?::([tTdDfFRsS]))?>", RegexOptions.Compiled);
 
         public NewsDetailWindow(NewsItem news)
         {
@@ -54,7 +55,7 @@ namespace LemiCraft_Launcher.Windows
 
         private void LoadNewsContent()
         {
-            TitleText.Text = _news.Title;
+            TitleText.Text = ReplaceDiscordTimestamps(_news.Title);
             DateText.Text = _news.PublishedAt.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("ru-RU"));
             AuthorText.Text = _news.AuthorName;
             CategoryText.Text = GetCategoryText(_news.Category);
@@ -84,7 +85,7 @@ namespace LemiCraft_Launcher.Windows
             else
                 ImageContainer.Visibility = Visibility.Collapsed;
 
-            RenderMarkdown(_news.Content);
+            RenderMarkdown(ReplaceDiscordTimestamps(_news.Content));
         }
 
         private void RenderMarkdown(string markdown)
@@ -192,6 +193,16 @@ namespace LemiCraft_Launcher.Windows
                 };
                 MarkdownDocument.Blocks.Add(para);
             }
+        }
+
+        private static string ReplaceDiscordTimestamps(string text)
+        {
+            return DiscordTimestampRegex.Replace(text, m =>
+            {
+                long unix = long.Parse(m.Groups[1].Value);
+                string? style = m.Groups[2].Success ? m.Groups[2].Value : null;
+                return FormatDiscordTimestamp(unix, style);
+            });
         }
 
         private void FlushParagraph(ref Paragraph paragraph)
@@ -324,6 +335,40 @@ namespace LemiCraft_Launcher.Windows
 
                 paragraph.Inlines.Add(run);
             }
+        }
+
+        private static string FormatDiscordTimestamp(long unix, string? style)
+        {
+            var dt = DateTimeOffset.FromUnixTimeSeconds(unix).ToLocalTime();
+            var ru = new System.Globalization.CultureInfo("ru-RU");
+
+            return style switch
+            {
+                "F" => dt.ToString("dddd, dd MMMM yyyy 'г.' 'в' HH:mm", ru),
+                "f" => dt.ToString("d MMMM yyyy 'г.' 'в' HH:mm", ru),
+                "D" => dt.ToString("d MMMM yyyy 'г.'", ru),
+                "d" => dt.ToString("dd.MM.yyyy", ru),
+                "t" => dt.ToString("HH:mm", ru),
+                "T" => dt.ToString("HH:mm:ss", ru),
+                "R" => FormatRelative(dt),
+                "s" => dt.ToString("dd.MM.yyyy, HH:mm", ru),
+                "S" => dt.ToString("dd.MM.yyyy, HH:mm:ss", ru),
+                _ => dt.ToString("d MMMM yyyy 'г.' HH:mm", ru),
+            };
+        }
+
+        private static string FormatRelative(DateTimeOffset dt)
+        {
+            var diff = DateTimeOffset.Now - dt;
+
+            if (diff.TotalSeconds < 60)
+                return $"{(int)diff.TotalSeconds} секунд назад";
+            if (diff.TotalMinutes < 60)
+                return $"{(int)diff.TotalMinutes} минут назад";
+            if (diff.TotalHours < 24)
+                return $"{(int)diff.TotalHours} часов назад";
+
+            return $"{(int)diff.TotalDays} дней назад";
         }
 
         private static void ProcessInlineFormatting(string text, List<(string text, TextStyle style)> parts)

@@ -37,7 +37,7 @@ namespace LemiCraft_Launcher.Controls
 
         private void UpdateUI(NewsItem news)
         {
-            TitleText.Text = news.Title;
+            TitleText.Text = Services.NewsService.GetPreview(news.Title, 500);
             PreviewText.Text = Services.NewsService.GetPreview(news.Content);
 
             DateText.Text = FormatDate(news.PublishedAt);

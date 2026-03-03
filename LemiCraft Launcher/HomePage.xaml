@@ -245,17 +245,17 @@
                        HorizontalContentAlignment="Left">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="📖" FontSize="16" Margin="0,0,10,0"/>
-                        <TextBlock Text="Вики" FontSize="14"/>
+                        <TextBlock Text="Вики проекта" FontSize="14"/>
                     </StackPanel>
                 </Button>
 
                 <Button Style="{StaticResource SecondaryButton}"
                        HorizontalAlignment="Stretch"
-                       Click="DiscordButton_Click"
+                       Click="MineDirButton_Click"
                        HorizontalContentAlignment="Left">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="💬" FontSize="16" Margin="0,0,10,0"/>
-                        <TextBlock Text="Discord сервер" FontSize="14"/>
+                        <TextBlock Text="📁" FontSize="16" Margin="0,0,10,0"/>
+                        <TextBlock Text="Папка игры" FontSize="14"/>
                     </StackPanel>
                 </Button>
             </StackPanel>

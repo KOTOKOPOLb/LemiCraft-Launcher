@@ -31,8 +31,10 @@ namespace LemiCraft_Launcher.Services
         [GeneratedRegex(@"#(\w+)")]
         private static partial Regex TagsRegex();
 
-        private static string NEWS_API_URL =>
-            $"{ConfigService.Load().ApiBaseUrl}/launcher/news";
+        [GeneratedRegex(@"<t:(\d+)(?::([tTdDfFRsS]))?>")]
+        private static partial Regex DiscordTimestampRegex();
+
+        private static string NEWS_API_URL => $"{ConfigService.Load().ApiBaseUrl}/launcher/news";
 
         private const int CACHE_LIFETIME_MINUTES = 30;
 
@@ -202,6 +204,8 @@ namespace LemiCraft_Launcher.Services
         {
             var preview = MarkdownSymbolsRegex().Replace(content, "");
 
+            preview = ReplaceDiscordTimestamps(preview);
+
             if (preview.Length > maxLength)
                 preview = preview[..maxLength] + "...";
 
@@ -212,6 +216,17 @@ namespace LemiCraft_Launcher.Services
         {
             var matches = TagsRegex().Matches(content);
             return matches.Select(m => m.Groups[1].Value).Distinct().ToList();
+        }
+
+        private static string ReplaceDiscordTimestamps(string text)
+        {
+            return DiscordTimestampRegex().Replace(text, m =>
+            {
+                long unix = long.Parse(m.Groups[1].Value);
+                var dt = DateTimeOffset.FromUnixTimeSeconds(unix).ToLocalTime().DateTime;
+
+                return dt.ToString("dd.MM.yyyy HH:mm");
+            });
         }
 
         private class NewsApiResponse
