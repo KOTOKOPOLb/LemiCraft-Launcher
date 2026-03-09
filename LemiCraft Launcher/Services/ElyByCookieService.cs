@@ -34,7 +34,7 @@ namespace LemiCraft_Launcher.Services
         public bool IsSlim { get; set; }
 
         [JsonPropertyName("tags")]
-        public List<string> Tags { get; set; } = new();
+        public List<string> Tags { get; set; } = [];
 
         [JsonPropertyName("count_views_total")]
         public int CountViews { get; set; }
@@ -43,7 +43,7 @@ namespace LemiCraft_Launcher.Services
     public class ElySkinsList
     {
         [JsonPropertyName("items")]
-        public List<ElySkinItem> Items { get; set; } = new();
+        public List<ElySkinItem> Items { get; set; } = [];
 
         [JsonPropertyName("total_items")]
         public int TotalItems { get; set; }

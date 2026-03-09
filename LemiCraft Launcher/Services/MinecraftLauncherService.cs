@@ -6,6 +6,7 @@ using LemiCraft_Launcher.Models;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 
 namespace LemiCraft_Launcher.Services
@@ -35,21 +36,20 @@ namespace LemiCraft_Launcher.Services
 
         private static MinecraftLauncher? _cachedLauncher = null;
         private static string? _cachedGameDir = null;
+        private static readonly object _launcherLock = new();
 
         private static MinecraftLauncher GetLauncher()
         {
-            var currentGameDir = GetGameDir();
-
-            if (_cachedLauncher == null || _cachedGameDir != currentGameDir)
+            lock (_launcherLock)
             {
-                var path = new MinecraftPath(currentGameDir);
-                _cachedLauncher = new MinecraftLauncher(path);
-                _cachedGameDir = currentGameDir;
-
-                Debug.WriteLine($"Создан новый MinecraftLauncher для: {currentGameDir}");
+                var currentGameDir = GetGameDir();
+                if (_cachedLauncher == null || _cachedGameDir != currentGameDir)
+                {
+                    _cachedLauncher = new MinecraftLauncher(new MinecraftPath(currentGameDir));
+                    _cachedGameDir = currentGameDir;
+                }
+                return _cachedLauncher;
             }
-
-            return _cachedLauncher;
         }
 
         public static void ResetLauncherCache()
@@ -296,6 +296,13 @@ namespace LemiCraft_Launcher.Services
                 Debug.WriteLine($"JVM Args: {config.JvmArgs}");
 
                 var process = await launcher.InstallAndBuildProcessAsync(fabricVersion, options);
+
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
+                process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
 
                 Debug.WriteLine("Minecraft процесс запущен успешно!");
                 return process;

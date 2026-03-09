@@ -5,7 +5,7 @@ namespace LemiCraft_Launcher.Models
         public string Version { get; set; } = "1.0.0";
         public DateTime ReleaseDate { get; set; }
         public string DownloadUrl { get; set; } = "";
-        public List<string> Changelog { get; set; } = new();
+        public List<string> Changelog { get; set; } = [];
         public bool IsRequired { get; set; }
         public long FileSize { get; set; }
         public string Sha256Hash { get; set; } = "";
@@ -17,9 +17,9 @@ namespace LemiCraft_Launcher.Models
         public DateTime ReleaseDate { get; set; }
         public string MinecraftVersion { get; set; } = "1.21.10";
         public string FabricVersion { get; set; } = "0.18.4";
-        public List<string> Changelog { get; set; } = new();
+        public List<string> Changelog { get; set; } = [];
         public ModpackUpdateType UpdateType { get; set; }
-        public Dictionary<string, long> FileSizes { get; set; } = new();
+        public Dictionary<string, long> FileSizes { get; set; } = [];
         public string DownloadUrl { get; set; } = "";
         public string Sha256Hash { get; set; } = "";
     }

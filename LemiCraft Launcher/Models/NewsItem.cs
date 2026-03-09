@@ -11,9 +11,10 @@ namespace LemiCraft_Launcher.Models
 
         public string? ImageUrl { get; set; }
         public string AuthorName { get; set; } = "";
+        public string AuthorRole { get; set; } = "Участник";
         public string? AuthorAvatarUrl { get; set; }
         public DateTime PublishedAt { get; set; }
-        public List<string> Tags { get; set; } = new();
+        public List<string> Tags { get; set; } = [];
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public NewsCategory Category { get; set; }
@@ -32,7 +33,7 @@ namespace LemiCraft_Launcher.Models
 
     public class NewsCacheData
     {
-        public List<NewsItem> Items { get; set; } = new();
+        public List<NewsItem> Items { get; set; } = [];
         public DateTime LastUpdate { get; set; }
         public int TotalCount { get; set; }
     }

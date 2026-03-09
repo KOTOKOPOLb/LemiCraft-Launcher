@@ -3,7 +3,6 @@ using LemiCraft_Launcher.Services;
 using LemiCraft_Launcher.Windows;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -133,7 +132,7 @@ namespace LemiCraft_Launcher
             FooterProgressPanel.Visibility = Visibility.Collapsed;
         }
 
-        public async void PlayButton_Click(object sender, RoutedEventArgs e)
+        private async void PlayButton_Click(object sender, RoutedEventArgs e)
         {
             var profile = AuthService.LoadProfile();
             if (profile == null)
@@ -187,14 +186,6 @@ namespace LemiCraft_Launcher
 
             HideProgress();
 
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = true;
-
-            process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
-            process.StartInfo.StandardErrorEncoding = Encoding.UTF8;
-
             if (_logsWindow != null)
             {
                 _logsWindow.SetStatus("Запуск игры...", "#FFA500");
@@ -214,24 +205,9 @@ namespace LemiCraft_Launcher
                     _logsWindow?.AppendLog($"[ERROR] {e.Data}");
             };
 
-            process.Start();
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-
-            _logsWindow?.SetStatus("Игра запущена", "#22C55E");
-
-            FooterPlayButtonIcon.Text = "⏸️";
-            FooterPlayButtonText.Text = "Игра запущена";
-
-            _ = Task.Run(() =>
+            process.EnableRaisingEvents = true;
+            process.Exited += (s, e) =>
             {
-                if (config.LauncherBehavior == 1)
-                    Dispatcher.Invoke(() => CloseButton_Click(null, new RoutedEventArgs()));
-                else if (config.LauncherBehavior == 2)
-                    Hide();
-
-                process.WaitForExit();
-
                 Dispatcher.Invoke(() =>
                 {
                     Show();
@@ -244,7 +220,20 @@ namespace LemiCraft_Launcher
                     _logsWindow?.SetStatus("Игра закрыта", "#EF4444");
                     _logsWindow?._timer.Stop();
                 });
-            });
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            _logsWindow?.SetStatus("Игра запущена");
+            FooterPlayButtonIcon.Text = "⏸️";
+            FooterPlayButtonText.Text = "Игра запущена";
+
+            if (config.LauncherBehavior == 1)
+                CloseButton_Click(null, new RoutedEventArgs());
+            else if (config.LauncherBehavior == 2)
+                Hide();
         }
 
         private async Task InstallGameAsync()
@@ -294,7 +283,7 @@ namespace LemiCraft_Launcher
             }
         }
 
-        public void AccountInfo_Click(object sender, MouseButtonEventArgs e)
+        private void AccountInfo_Click(object sender, MouseButtonEventArgs e)
         {
             var profile = AuthService.LoadProfile();
             if (profile != null && PlayButton.IsEnabled)

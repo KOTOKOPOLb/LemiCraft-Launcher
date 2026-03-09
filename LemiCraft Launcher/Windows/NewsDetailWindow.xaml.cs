@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
+using Cursors = System.Windows.Input.Cursors;
 using FontFamily = System.Windows.Media.FontFamily;
 
 namespace LemiCraft_Launcher.Windows
@@ -18,8 +19,9 @@ namespace LemiCraft_Launcher.Windows
         private AnimationClock? _verticalScrollClock;
         private double _scrollTargetOffset = 0;
 
-        private static readonly Regex MentionTokenRegex = new(@"^@(?:\P{L}\P{N})*[\p{L}\p{N}_-]+(?=$|\s|\p{P})", RegexOptions.Compiled);
+        private static readonly Regex MentionInTextRegex = new(@"@[^\s,\.!?;:\)\(]+", RegexOptions.Compiled);
         private static readonly Regex DiscordTimestampRegex = new(@"<t:(\d+)(?::([tTdDfFRsS]))?>", RegexOptions.Compiled);
+        private static readonly Regex UrlRegex = new(@"https?://[^\s<>""]+[^\s<>"".,;!?)\]']",RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public NewsDetailWindow(NewsItem news)
         {
@@ -55,9 +57,10 @@ namespace LemiCraft_Launcher.Windows
 
         private void LoadNewsContent()
         {
-            TitleText.Text = ReplaceDiscordTimestamps(_news.Title);
+            RenderTitleWithMentions(ReplaceDiscordTimestamps(_news.Title));
             DateText.Text = _news.PublishedAt.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("ru-RU"));
             AuthorText.Text = _news.AuthorName;
+            AuthorRoleText.Text = _news.AuthorRole;
             CategoryText.Text = GetCategoryText(_news.Category);
             SetCategoryColor(_news.Category);
 
@@ -86,6 +89,52 @@ namespace LemiCraft_Launcher.Windows
                 ImageContainer.Visibility = Visibility.Collapsed;
 
             RenderMarkdown(ReplaceDiscordTimestamps(_news.Content));
+            MarkdownViewer.AddHandler(
+                Hyperlink.RequestNavigateEvent,
+                new System.Windows.Navigation.RequestNavigateEventHandler((s, e) =>
+                {
+                    Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+                    e.Handled = true;
+                }));
+            MarkdownViewer.PreviewMouseMove += (s, e) =>
+            {
+                var source = e.OriginalSource as FrameworkContentElement;
+                bool isOverLink = false;
+                var el = source as TextElement;
+                while (el != null)
+                {
+                    if (el is Hyperlink) { isOverLink = true; break; }
+                    el = el.Parent as TextElement;
+                }
+                Mouse.OverrideCursor = isOverLink ? Cursors.Hand : Cursors.Arrow;
+            };
+
+            MarkdownViewer.MouseLeave += (s, e) => Mouse.OverrideCursor = null;
+        }
+
+        private void RenderTitleWithMentions(string title)
+        {
+            TitleText.Inlines.Clear();
+
+            var mentionRegex = new Regex(@"@[^\s,\.!?;:\)\(]+", RegexOptions.Compiled);
+
+            var lastIndex = 0;
+            foreach (Match m in mentionRegex.Matches(title))
+            {
+                if (m.Index > lastIndex)
+                    TitleText.Inlines.Add(new Run(title[lastIndex..m.Index]));
+
+                TitleText.Inlines.Add(new Run(m.Value)
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(50, 88, 101, 242)),
+                    Foreground = new SolidColorBrush(Color.FromRgb(147, 157, 255))
+                });
+
+                lastIndex = m.Index + m.Length;
+            }
+
+            if (lastIndex < title.Length)
+                TitleText.Inlines.Add(new Run(title[lastIndex..]));
         }
 
         private void RenderMarkdown(string markdown)
@@ -278,63 +327,98 @@ namespace LemiCraft_Launcher.Windows
 
         private void AddFormattedText(Paragraph paragraph, string text)
         {
+            var lastIndex = 0;
+            foreach (Match urlMatch in UrlRegex.Matches(text))
+            {
+                if (urlMatch.Index > lastIndex)
+                    AddInlineSegment(paragraph, text[lastIndex..urlMatch.Index]);
+
+                var url = urlMatch.Value;
+                string displayText;
+                try { displayText = new Uri(url).Host.Replace("www.", ""); }
+                catch { displayText = url; }
+
+                var link = new Hyperlink(new Run(displayText))
+                {
+                    NavigateUri = new Uri(url),
+                    Foreground = new SolidColorBrush(Color.FromRgb(147, 157, 255)),
+                    TextDecorations = TextDecorations.Underline
+                };
+                link.RequestNavigate += (s, e) =>
+                {
+                    Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+                    e.Handled = true;
+                };
+                paragraph.Inlines.Add(link);
+                lastIndex = urlMatch.Index + urlMatch.Length;
+            }
+
+            if (lastIndex < text.Length)
+                AddInlineSegment(paragraph, text[lastIndex..]);
+        }
+
+        private void AddInlineSegment(Paragraph paragraph, string text)
+        {
             var parts = new List<(string text, TextStyle style)>();
             ProcessInlineFormatting(text, parts);
 
             foreach (var (partText, style) in parts)
             {
-                if (style == TextStyle.None && partText.StartsWith('@') && partText.Length > 1)
+                if (style != TextStyle.None)
                 {
-                    var m = MentionTokenRegex.Match(partText);
-                    if (m.Success)
+                    AddStyledRun(paragraph, partText, style);
+                    continue;
+                }
+
+                var lastIdx = 0;
+                foreach (Match m in MentionInTextRegex.Matches(partText))
+                {
+                    if (m.Index > lastIdx)
+                        paragraph.Inlines.Add(new Run(partText[lastIdx..m.Index])
+                        {
+                            Foreground = new SolidColorBrush(Color.FromRgb(229, 231, 235))
+                        });
+
+                    paragraph.Inlines.Add(new Run(m.Value)
                     {
-                        var mentionRun = new Run(m.Value)
-                        {
-                            Background = new SolidColorBrush(Color.FromArgb(50, 88, 101, 242)),
-                            Foreground = new SolidColorBrush(Color.FromRgb(147, 157, 255))
-                        };
-                        paragraph.Inlines.Add(mentionRun);
+                        Background = new SolidColorBrush(Color.FromArgb(50, 88, 101, 242)),
+                        Foreground = new SolidColorBrush(Color.FromRgb(147, 157, 255))
+                    });
 
-                        if (m.Length < partText.Length)
-                        {
-                            var rest = partText.Substring(m.Length);
-                            var restRun = new Run(rest)
-                            {
-                                Foreground = new SolidColorBrush(Color.FromRgb(229, 231, 235))
-                            };
-                            paragraph.Inlines.Add(restRun);
-                        }
-
-                        continue;
-                    }
+                    lastIdx = m.Index + m.Length;
                 }
 
-                var run = new Run(partText);
-
-                if (style.HasFlag(TextStyle.Bold))
-                    run.FontWeight = FontWeights.Bold;
-
-                if (style.HasFlag(TextStyle.Italic))
-                    run.FontStyle = FontStyles.Italic;
-
-                if (style.HasFlag(TextStyle.Strikethrough))
-                    run.TextDecorations = TextDecorations.Strikethrough;
-
-                if (style.HasFlag(TextStyle.Code))
-                {
-                    run.FontFamily = new FontFamily("Consolas, Courier New");
-                    run.Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 255));
-                    run.Foreground = new SolidColorBrush(Color.FromRgb(230, 238, 243));
-                }
-
-                if (style.HasFlag(TextStyle.Spoiler))
-                {
-                    run.Background = new SolidColorBrush(Color.FromArgb(40, 255, 255, 255));
-                    run.Foreground = new SolidColorBrush(Colors.Transparent);
-                }
-
-                paragraph.Inlines.Add(run);
+                if (lastIdx < partText.Length)
+                    paragraph.Inlines.Add(new Run(partText[lastIdx..])
+                    {
+                        Foreground = new SolidColorBrush(Color.FromRgb(229, 231, 235))
+                    });
             }
+        }
+
+        private static void AddStyledRun(Paragraph paragraph, string text, TextStyle style)
+        {
+            var run = new Run(text);
+
+            if (style.HasFlag(TextStyle.Bold))
+                run.FontWeight = FontWeights.Bold;
+            if (style.HasFlag(TextStyle.Italic))
+                run.FontStyle = FontStyles.Italic;
+            if (style.HasFlag(TextStyle.Strikethrough))
+                run.TextDecorations = TextDecorations.Strikethrough;
+            if (style.HasFlag(TextStyle.Code))
+            {
+                run.FontFamily = new FontFamily("Consolas, Courier New");
+                run.Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 255));
+                run.Foreground = new SolidColorBrush(Color.FromRgb(230, 238, 243));
+            }
+            if (style.HasFlag(TextStyle.Spoiler))
+            {
+                run.Background = new SolidColorBrush(Color.FromArgb(40, 255, 255, 255));
+                run.Foreground = new SolidColorBrush(Colors.Transparent);
+            }
+
+            paragraph.Inlines.Add(run);
         }
 
         private static string FormatDiscordTimestamp(long unix, string? style)

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Windows;
 using Button = System.Windows.Controls.Button;
 

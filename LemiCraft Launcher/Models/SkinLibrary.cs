@@ -28,6 +28,6 @@ namespace LemiCraft_Launcher.Models
     {
         public bool Success { get; set; }
         public string Username { get; set; } = "";
-        public List<SkinLibraryItem> Skins { get; set; } = new();
+        public List<SkinLibraryItem> Skins { get; set; } = [];
     }
 }

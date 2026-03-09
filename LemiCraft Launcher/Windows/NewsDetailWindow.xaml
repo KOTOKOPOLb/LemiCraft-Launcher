@@ -188,7 +188,7 @@
                                                   BorderThickness="0"
                                                   IsToolBarVisible="False"
                                                   Focusable="False"
-                                                  IsHitTestVisible="False"
+                                                  IsHitTestVisible="True"
                                                   Cursor="Arrow"
                                                   Margin="0,0,0,20"
                                                   PreviewMouseWheel="MarkdownViewer_PreviewMouseWheel">
@@ -232,7 +232,8 @@
                                                FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="White"/>
-                                    <TextBlock Text="Администратор"
+                                    <TextBlock x:Name="AuthorRoleText"
+                                               Text="Участник"
                                                FontSize="11"
                                                Foreground="#64748B"
                                                Margin="0,1,0,0"/>

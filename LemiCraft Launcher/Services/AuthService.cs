@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using LemiCraft_Launcher.Models;
 
 namespace LemiCraft_Launcher.Services
 {
@@ -31,13 +32,9 @@ namespace LemiCraft_Launcher.Services
         {
             try
             {
-                var payload = new
-                {
-                    username,
-                    password,
-                    clientToken = Guid.NewGuid().ToString("N"),
-                    requestUser = true
-                };
+                var clientToken = Guid.NewGuid().ToString("N");
+
+                var payload = new { username, password, clientToken, requestUser = true };
 
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -87,6 +84,7 @@ namespace LemiCraft_Launcher.Services
                 {
                     Username = name,
                     AccessToken = accessToken,
+                    ClientToken = clientToken,
                     Uuid = uuid,
                     Provider = "Ely.by",
                     LastLogin = DateTime.Now
@@ -116,25 +114,11 @@ namespace LemiCraft_Launcher.Services
             }
         }
 
-        public static Task<AuthResult> LoginMicrosoftAsync(string _, string _2)
-        {
-            // TODO: Реализовать авторизацию через Microsoft по логину\паролю
-            return Task.FromResult(new AuthResult
-            {
-                Success = false,
-                ErrorMessage = "Авторизация через Microsoft временно недоступна.\nИспользуйте Ely.by или вход через браузер"
-            });
-        }
-
-        public static async Task<bool> ValidateElyByTokenAsync(string accessToken)
+        public static async Task<bool?> ValidateElyByTokenAsync(string accessToken)
         {
             try
             {
-                var payload = new
-                {
-                    accessToken
-                };
-
+                var payload = new { accessToken };
                 var json = JsonSerializer.Serialize(payload);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -143,7 +127,13 @@ namespace LemiCraft_Launcher.Services
                     content
                 );
 
-                return response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode) return true;
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized ||
+                    response.StatusCode == HttpStatusCode.BadRequest)
+                    return false;
+
+                return null;
             }
             catch
             {
@@ -151,13 +141,14 @@ namespace LemiCraft_Launcher.Services
             }
         }
 
-        public static async Task<AuthResult> RefreshElyByTokenAsync(string accessToken)
+        public static async Task<AuthResult> RefreshElyByTokenAsync(UserProfile profile)
         {
             try
             {
                 var payload = new
                 {
-                    accessToken,
+                    accessToken = profile.AccessToken,
+                    clientToken = profile.ClientToken,
                     requestUser = true
                 };
 
@@ -181,16 +172,17 @@ namespace LemiCraft_Launcher.Services
                 var uuid = selectedProfile.GetProperty("id").GetString() ?? "";
                 var name = selectedProfile.GetProperty("name").GetString() ?? "";
 
-                var profile = new UserProfile
+                var newProfile = new UserProfile
                 {
                     Username = name,
                     AccessToken = newAccessToken,
+                    ClientToken = profile.ClientToken,
                     Uuid = uuid,
                     Provider = "Ely.by",
                     LastLogin = DateTime.Now
                 };
 
-                return new AuthResult { Success = true, Profile = profile };
+                return new AuthResult { Success = true, Profile = newProfile };
             }
             catch (Exception ex)
             {
@@ -270,28 +262,34 @@ namespace LemiCraft_Launcher.Services
         public static async Task<AuthResult> AutoLoginAsync()
         {
             var profile = LoadProfile();
-
             if (profile == null)
                 return new AuthResult { Success = false, ErrorMessage = "Нет сохраненного профиля" };
 
             if (profile.Provider == "Ely.by")
             {
-                var isValid = await ValidateElyByTokenAsync(profile.AccessToken);
+                var validationResult = await ValidateElyByTokenAsync(profile.AccessToken);
 
-                if (isValid)
+                if (validationResult == true)
                 {
                     profile.LastLogin = DateTime.Now;
                     SaveProfile(profile);
                     return new AuthResult { Success = true, Profile = profile };
                 }
 
-                var refreshResult = await RefreshElyByTokenAsync(profile.AccessToken);
+                if (validationResult == null)
+                {
+                    Debug.WriteLine("Сеть недоступна, используем кешированный профиль");
+                    return new AuthResult { Success = true, Profile = profile };
+                }
 
+                var refreshResult = await RefreshElyByTokenAsync(profile);
                 if (refreshResult.Success && refreshResult.Profile != null)
                 {
                     SaveProfile(refreshResult.Profile);
                     return refreshResult;
                 }
+
+                return new AuthResult { Success = false, ErrorMessage = "Сессия истекла. Войдите заново" };
             }
             if (profile.Provider == "Microsoft")
             {
@@ -454,6 +452,7 @@ namespace LemiCraft_Launcher.Services
                 {
                     Username = username,
                     AccessToken = accessToken,
+                    ClientToken = Guid.NewGuid().ToString("N"),
                     Uuid = uuid,
                     Provider = "Ely.by",
                     LastLogin = DateTime.Now
@@ -533,9 +532,10 @@ namespace LemiCraft_Launcher.Services
                 var profile = new UserProfile
                 {
                     Username = username,
+                    AccessToken = accessToken,
+                    ClientToken = Guid.NewGuid().ToString("N"),
                     Uuid = uuid,
                     Provider = "Ely.by",
-                    AccessToken = accessToken,
                     LastLogin = DateTime.Now
                 };
 
