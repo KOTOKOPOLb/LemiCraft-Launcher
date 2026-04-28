@@ -182,14 +182,12 @@ namespace LemiCraft_Launcher
                 );
             }
 
-            if (!oldShowLogs && newConfig.ShowLogs)
-            {
-                var mainWindow = Window.GetWindow(this) as MainWindow;
-                mainWindow?.OpenLogsWindow();
-            }
+            var mainWindow = Window.GetWindow(this) as MainWindow;
 
-            var mainWindow2 = Window.GetWindow(this) as MainWindow;
-            mainWindow2?.NavigateToHome();
+            if (!oldShowLogs && newConfig.ShowLogs)
+                mainWindow?.OpenLogsWindow();
+
+            mainWindow?.NavigateToHome();
         }
 
         private void SaveSettings()

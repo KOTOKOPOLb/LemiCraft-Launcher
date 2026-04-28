@@ -9,9 +9,9 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
-    <Version>1.4.1</Version>
-    <AssemblyVersion>1.4.1</AssemblyVersion>
-    <FileVersion>1.4.0</FileVersion>
+    <Version>1.5.0</Version>
+    <AssemblyVersion>1.5.0</AssemblyVersion>
+    <FileVersion>1.5.0</FileVersion>
     <Company>LemiCraft</Company>
     <Product>LemiCraft Launcher</Product>
     <Copyright>© 2026 LemiCraft</Copyright>

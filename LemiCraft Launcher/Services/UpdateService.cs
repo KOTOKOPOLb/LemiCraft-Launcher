@@ -189,7 +189,13 @@ namespace LemiCraft_Launcher.Services
                 Debug.WriteLine($"Тип обновления: {updateType}");
 
                 var driveInfo = new DriveInfo(Path.GetPathRoot(gameDir)!);
-                var requiredSpace = version.FileSizes.Values.FirstOrDefault();
+                var sizeKey = updateType switch
+                {
+                    ModpackUpdateType.ModsOnly => "mods",
+                    ModpackUpdateType.ModsAndResources => "mods_resources",
+                    _ => "full"
+                };
+                var requiredSpace = version.FileSizes.TryGetValue(sizeKey, out var sz) ? sz : version.FileSizes.Values.FirstOrDefault();
 
                 if (driveInfo.AvailableFreeSpace < requiredSpace)
                 {
@@ -206,7 +212,7 @@ namespace LemiCraft_Launcher.Services
 
                 Debug.WriteLine($"Скачивание с: {downloadUrl}");
 
-                var tempZip = Path.Combine(Path.GetTempPath(), $"modpack_{DateTime.Now:yyyyMMddHHmmss}.zip");
+                var tempZip = Path.Combine(Path.GetTempPath(), $"modpack_{Guid.NewGuid():N}.zip");
 
                 using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) };
 
@@ -259,7 +265,6 @@ namespace LemiCraft_Launcher.Services
                     try
                     {
                         using var archive = ZipFile.OpenRead(tempZip);
-                        archive.Dispose();
                     }
                     catch (InvalidDataException)
                     {

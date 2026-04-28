@@ -1,5 +1,6 @@
 using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Services;
+using LemiCraft_Launcher.Utils;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -56,15 +57,7 @@ namespace LemiCraft_Launcher.Windows
             }
         }
 
-        private static string FormatFileSize(long bytes)
-        {
-            if (bytes == 0) return "N/A";
-            string[] sizes = { "B", "KB", "MB", "GB" };
-            double len = bytes;
-            int order = 0;
-            while (len >= 1024 && order < sizes.Length - 1) { order++; len /= 1024; }
-            return $"{len:0.#} {sizes[order]}";
-        }
+        private static string FormatFileSize(long bytes) => FileUtils.FormatFileSize(bytes);
 
         private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
         {

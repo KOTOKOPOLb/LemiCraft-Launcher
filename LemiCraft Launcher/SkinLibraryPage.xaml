@@ -201,7 +201,8 @@
                                            Foreground="#9CA3AF"
                                            HorizontalAlignment="Center"
                                            Margin="0,0,0,24"/>
-                                <Button Content="📤 Загрузить скин"
+                                <Button x:Name="EmptyUploadButton"
+                                        Content="📤 Загрузить скин"
                                         Background="#22C55E"
                                         Foreground="White"
                                         BorderThickness="0"

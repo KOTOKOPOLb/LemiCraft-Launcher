@@ -137,7 +137,7 @@ namespace LemiCraft_Launcher.Services
             }
             catch
             {
-                return false;
+                return null;
             }
         }
 

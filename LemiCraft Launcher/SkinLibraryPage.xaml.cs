@@ -95,6 +95,8 @@ namespace LemiCraft_Launcher
                     else
                     {
                         ShowEmpty();
+                        UploadButton.Visibility = Visibility.Collapsed;
+                        EmptyUploadButton.Visibility = Visibility.Collapsed;
                         return;
                     }
                 }

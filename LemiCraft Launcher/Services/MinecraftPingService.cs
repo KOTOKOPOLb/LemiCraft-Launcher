@@ -29,15 +29,16 @@ namespace LemiCraft_Launcher.Services
                     var srv = await ResolveMinecraftSrvAsync(host);
                     if (srv != null)
                     {
+                        Debug.WriteLine($"SRV resolved: {host} -> {srv.Value.host}:{srv.Value.port}");
                         host = srv.Value.host;
                         port = srv.Value.port;
                     }
                     else
-                        Debug.WriteLine("No SRV record found; using provided host/port");
+                        Debug.WriteLine($"No SRV record for _minecraft._tcp.{host}; using {host}:{port}");
                 }
 
                 using var client = new TcpClient();
-                await client.ConnectAsync(host, port).WaitAsync(cts.Token);
+                await client.ConnectAsync(host, port, cts.Token);
 
                 using var stream = client.GetStream();
                 stream.ReadTimeout = timeoutMs;
@@ -92,8 +93,9 @@ namespace LemiCraft_Launcher.Services
 
                 return result;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[Ping] FAILED at: {ex.GetType().Name}: {ex.Message}");
                 return null;
             }
         }
@@ -102,8 +104,9 @@ namespace LemiCraft_Launcher.Services
         {
             try
             {
+                using var cts = new CancellationTokenSource(2000);
                 var lookup = new DnsClient.LookupClient();
-                var res = await lookup.QueryAsync($"_minecraft._tcp.{host}", DnsClient.QueryType.SRV);
+                var res = await lookup.QueryAsync($"_minecraft._tcp.{host}", DnsClient.QueryType.SRV, cancellationToken: cts.Token);
                 var srv = res.Answers.SrvRecords().FirstOrDefault();
                 if (srv != null)
                 {

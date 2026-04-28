@@ -85,14 +85,11 @@ namespace LemiCraft_Launcher.Services
 
         public static async Task PreloadAvatarAsync(string nickname, bool use3D = true)
         {
-            await Task.Run(async () =>
+            try
             {
-                try
-                {
-                    await GetAvatarAsync(nickname, use3D);
-                }
-                catch { }
-            });
+                await GetAvatarAsync(nickname, use3D);
+            }
+            catch { }
         }
     }
 }

@@ -164,12 +164,6 @@
                 <Grid Margin="24,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                         <Border Width="36" Height="36" Margin="0,0,12,0">
-                            <Border.Clip>
-                                <EllipseGeometry Center="18,18" RadiusX="18" RadiusY="18"/>
-                            </Border.Clip>
-                            <Border.Effect>
-                                <DropShadowEffect Color="#22C55E" BlurRadius="10" ShadowDepth="0" Opacity="0.6"/>
-                            </Border.Effect>
                             <Grid>
                                 <Image x:Name="LauncherLogo"
                                        Source="pack://application:,,,/Resources/logo.png"

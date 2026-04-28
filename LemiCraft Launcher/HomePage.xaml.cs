@@ -108,7 +108,15 @@ namespace LemiCraft_Launcher
 
         private async Task UpdateServerStatus()
         {
-            var status = await MineStatClient.PingAsync("lemicraft.ru");
+            ServerStatus? status = null;
+
+            for (int attempt = 1; attempt <= 3 && status == null; attempt++)
+            {
+                if (attempt > 1)
+                    await Task.Delay(2000);
+
+                status = await MineStatClient.PingAsync("proxy.lemicraft.ru", resolveSrv: false);
+            }
 
             if (status == null)
             {
