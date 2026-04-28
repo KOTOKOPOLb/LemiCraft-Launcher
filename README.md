@@ -1,8 +1,8 @@
-# LemiCraft Launcher
-
 <p align="center">
-  <strong>Официальный лаунчер для Minecraft сервера LemiCraft</strong>
+  <img src="assets/logo_rounded.svg" alt="LemiCraft" width="120"/>
 </p>
+
+<h3 align="center">Официальный лаунчер для Minecraft проекта LemiCraft</h3>
 
 <p align="center">
   <a href="https://lemicraft.ru">🌐 Сайт</a> •
@@ -14,7 +14,7 @@
 
 ## 📋 О проекте
 
-LemiCraft Launcher — современный лаунчер для Minecraft с автоматической установкой модпаков, управлением профилями и удобной игры на проекте LemiCraft
+LemiCraft Launcher — современный лаунчер для Minecraft с автоматической установкой модпаков, управлением профилям и удобной игры на проекте LemiCraft
 
 ### ✨ Основные возможности
 
@@ -24,6 +24,7 @@ LemiCraft Launcher — современный лаунчер для Minecraft с
 - ⚙️ **Гибкие настройки** Java, RAM, пути установки
 - 📊 **Мониторинг** статуса сервера в реальном времени
 - 🎨 **Современный UI** с темной темой и плавными анимациями
+- 👤 **Смена скина** прямо из лаунчера
 
 ## 🚀 Установка
 
