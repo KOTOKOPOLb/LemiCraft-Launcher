@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Color = System.Windows.Media.Color;
@@ -40,23 +40,23 @@ namespace LemiCraft_Launcher.Windows
             switch (type)
             {
                 case MessageBoxType.Information:
-                    IconText.Text = "ℹ️";
+                    IconText.Text = ""; // Info
                     IconBorder.Background = new SolidColorBrush(Color.FromRgb(59, 130, 246));
                     break;
                 case MessageBoxType.Question:
-                    IconText.Text = "❓";
+                    IconText.Text = ""; // Help
                     IconBorder.Background = new SolidColorBrush(Color.FromRgb(234, 179, 8));
                     break;
                 case MessageBoxType.Success:
-                    IconText.Text = "✅";
+                    IconText.Text = ""; // Accept
                     IconBorder.Background = new SolidColorBrush(Color.FromRgb(34, 197, 94));
                     break;
                 case MessageBoxType.Error:
-                    IconText.Text = "❌";
+                    IconText.Text = ""; // Error
                     IconBorder.Background = new SolidColorBrush(Color.FromRgb(239, 68, 68));
                     break;
                 case MessageBoxType.Warning:
-                    IconText.Text = "⚠️";
+                    IconText.Text = ""; // Warning
                     IconBorder.Background = new SolidColorBrush(Color.FromRgb(234, 179, 8));
                     break;
             }

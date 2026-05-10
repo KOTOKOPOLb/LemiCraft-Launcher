@@ -1,9 +1,14 @@
-﻿using System.Reflection;
+﻿using System.IO;
+using System.Reflection;
 
 namespace LemiCraft_Launcher
 {
     public static class AppVersion
     {
+        // Portable = одиночный .exe без рядом лежащей .dll
+        public static bool IsPortable => !File.Exists(
+            Path.ChangeExtension(Environment.ProcessPath ?? "", ".dll"));
+
         public static string Current
         {
             get

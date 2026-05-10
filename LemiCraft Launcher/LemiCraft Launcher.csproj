@@ -7,11 +7,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <StartupObject>LemiCraft_Launcher.Program</StartupObject>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Resources\logo.ico</ApplicationIcon>
-    <Version>1.5.0</Version>
-    <AssemblyVersion>1.5.0</AssemblyVersion>
-    <FileVersion>1.5.0</FileVersion>
+    <Version>1.6.0</Version>
+    <AssemblyVersion>1.6.0</AssemblyVersion>
+    <FileVersion>1.6.0</FileVersion>
     <Company>LemiCraft</Company>
     <Product>LemiCraft Launcher</Product>
     <Copyright>© 2026 LemiCraft</Copyright>
@@ -20,11 +21,7 @@
     <SignAssembly>False</SignAssembly>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
-    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
-    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
-    <PublishDir>publish\</PublishDir>
     <AssemblyName>LemiCraft_Launcher</AssemblyName>
   </PropertyGroup>
 
@@ -49,12 +46,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Resources\auth-success.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
-  <Target Name="BuildInstaller" AfterTargets="Publish">
-    <Exec Command="&quot;C:\Users\Home\AppData\Local\Programs\Inno Setup 6\ISCC.exe&quot; &quot;$(SolutionDir)installer\LemiCraft.iss&quot; /DAppVersion=$(Version)" />
+  <Target Name="BuildInstaller" AfterTargets="Publish" Condition="'$(RunBuildInstaller)' == 'true'">
+    <Exec Command="&quot;C:\Users\Home\AppData\Local\Programs\Inno Setup 6\ISCC.exe&quot; &quot;$(MSBuildProjectDirectory)\..\installer\LemiCraft.iss&quot; /DAppVersion=$(Version)" />
   </Target>
 </Project>

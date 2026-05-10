@@ -192,11 +192,10 @@
                     CornerRadius="16,16,0,0"
                     MouseLeftButtonDown="TitleBar_MouseDown">
                 <Grid Height="50" Margin="20,0">
-                    <TextBlock Text="📤 Загрузить скин"
-                               FontSize="16"
-                               FontWeight="SemiBold"
-                               Foreground="White"
-                               VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Загрузить скин" FontSize="16" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                    </StackPanel>
                     
                     <Button x:Name="CloseButtonTop"
                             Content="✕"
@@ -248,7 +247,9 @@
                         <StackPanel x:Name="PlaceholderPanel"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center">
-                            <TextBlock Text="📁"
+                            <TextBlock Text="&#xE8B7;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       Foreground="White"
                                        FontSize="48"
                                        HorizontalAlignment="Center"
                                        Margin="0,0,0,12"/>
@@ -371,7 +372,6 @@
 
                 <Button x:Name="UploadButton"
                         Grid.Column="1"
-                        Content="📤 Загрузить"
                         Background="#22C55E"
                         Foreground="White"
                         BorderThickness="0"
@@ -382,6 +382,12 @@
                         Margin="10,0,0,0"
                         Cursor="Hand"
                         Click="UploadButton_Click">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE898;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="White" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Загрузить" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="border"

@@ -4,7 +4,7 @@ namespace LemiCraft_Launcher.Models
     {
         public int RamGb { get; set; } = 4;
         public string JvmArgs { get; set; } = "-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions";
-        public string JavaPath { get; set; } = "Автоопределение";
+        public string JavaPath { get; set; } = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
         public string GamePath { get; set; } = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "LemiCraft"
@@ -14,6 +14,7 @@ namespace LemiCraft_Launcher.Models
 
         public bool ShowLogs { get; set; }
         public bool AutoConnect { get; set; }
+        public bool CrashAnalyzer { get; set; } = true;
 
         public string ApiBaseUrl { get; set; } = "https://lemicraft.ru/api";
 

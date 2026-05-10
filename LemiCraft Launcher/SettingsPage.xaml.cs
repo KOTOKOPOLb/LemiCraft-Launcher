@@ -92,6 +92,7 @@ namespace LemiCraft_Launcher
 
             ShowLogsCheckBox.IsChecked = cfg.ShowLogs;
             AutoConnectCheckBox.IsChecked = cfg.AutoConnect;
+            CrashAnalyzerCheckBox.IsChecked = cfg.CrashAnalyzer;
 
             LauncherBehaviorCombo.SelectedIndex = cfg.LauncherBehavior;
         }
@@ -200,6 +201,7 @@ namespace LemiCraft_Launcher
                 GamePath = GamePathBox.Text,
                 ShowLogs = ShowLogsCheckBox.IsChecked == true,
                 AutoConnect = AutoConnectCheckBox.IsChecked == true,
+                CrashAnalyzer = CrashAnalyzerCheckBox.IsChecked == true,
                 LauncherBehavior = LauncherBehaviorCombo.SelectedIndex
             };
 
@@ -226,6 +228,7 @@ namespace LemiCraft_Launcher
                 LauncherBehaviorCombo.SelectedIndex = 2;
                 ShowLogsCheckBox.IsChecked = false;
                 AutoConnectCheckBox.IsChecked = false;
+                CrashAnalyzerCheckBox.IsChecked = true;
 
                 CustomMessageBox.ShowSuccess("Настройки сброшены");
             }

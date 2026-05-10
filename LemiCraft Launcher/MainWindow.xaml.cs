@@ -208,6 +208,7 @@ namespace LemiCraft_Launcher
             process.EnableRaisingEvents = true;
             process.Exited += (s, e) =>
             {
+                var exitCode = process.ExitCode;
                 Dispatcher.Invoke(() =>
                 {
                     Show();
@@ -217,8 +218,20 @@ namespace LemiCraft_Launcher
                     PlayButton.IsEnabled = true;
                     AccountInfoPanel.IsEnabled = true;
                     SettingsButton.IsEnabled = true;
-                    _logsWindow?.SetStatus("Игра закрыта", "#EF4444");
-                    _logsWindow?._timer.Stop();
+
+                    if (exitCode != 0)
+                    {
+                        _logsWindow?.SetStatus($"Краш (код {exitCode})", "#EF4444");
+                        _logsWindow?._timer.Stop();
+
+                        if (config.CrashAnalyzer && config.LauncherBehavior != 1)
+                            HandleMinecraftCrash(config.GamePath);
+                    }
+                    else
+                    {
+                        _logsWindow?.SetStatus("Игра закрыта", "#9CA3AF");
+                        _logsWindow?._timer.Stop();
+                    }
                 });
             };
 
@@ -234,6 +247,31 @@ namespace LemiCraft_Launcher
                 CloseButton_Click(null, new RoutedEventArgs());
             else if (config.LauncherBehavior == 2)
                 Hide();
+        }
+
+        private void HandleMinecraftCrash(string gameDir)
+        {
+            var logPath = Path.Combine(gameDir, "logs", "latest.log");
+
+            var result = CustomMessageBox.ShowQuestion(
+                "Похоже, Minecraft закрылся некорректно.\n\n" +
+                "Это может быть краш или нехватка памяти.\n\n" +
+                "Открыть logs/latest.log для просмотра и отправки в тикет?",
+                "Аварийное закрытие");
+
+            if (result != CustomMessageBox.MessageBoxResult.Yes) return;
+
+            if (!File.Exists(logPath))
+            {
+                CustomMessageBox.ShowError($"Файл лога не найден:\n{logPath}");
+                return;
+            }
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = logPath,
+                UseShellExecute = true
+            });
         }
 
         private async Task InstallGameAsync()
@@ -414,13 +452,26 @@ namespace LemiCraft_Launcher
                 _logsWindow.Show();
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e) => await CheckForUpdatesAsync();
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            await CheckForUpdatesAsync();
+
+            if (!string.IsNullOrWhiteSpace(StartupData.PendingImportCode))
+            {
+                var code = StartupData.PendingImportCode;
+                StartupData.PendingImportCode = null;
+                TriggerImport(code);
+            }
+
+            StartupData.ImportCodeReceived += code =>
+                Dispatcher.Invoke(() => TriggerImport(code));
+        }
 
         private async Task CheckForUpdatesAsync()
         {
             try
             {
-                var result = await UpdateService.CheckForUpdatesAsync();
+                var result = StartupData.UpdateResult ?? await UpdateService.CheckForUpdatesAsync();
 
                 if (result.LauncherUpdateAvailable && result.LauncherVersion != null)
                 {
@@ -473,6 +524,23 @@ namespace LemiCraft_Launcher
                         _ = home.UpdateModpackDisplayAsync();
                 }
             }
+        }
+
+        private void ImportButton_Click(object sender, RoutedEventArgs e) => TriggerImport(null);
+
+        public void TriggerImport(string? code)
+        {
+            if (!IsVisible) Show();
+            if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+            Activate();
+            Topmost = true;
+            Topmost = false;
+
+            var win = new ModpackImportWindow(code) { Owner = this };
+            win.ShowDialog();
+
+            if (win.ImportSuccessful && MainFrame.Content is HomePage home)
+                _ = home.UpdateModpackDisplayAsync();
         }
 
         private void MainWindow_Closed(object? sender, EventArgs e)

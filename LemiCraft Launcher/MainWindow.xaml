@@ -208,6 +208,12 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="ImportButton"
+                                Content="📦"
+                                Style="{StaticResource IconButton}"
+                                ToolTip="Импорт сборки по коду"
+                                Click="ImportButton_Click"
+                                Margin="0,0,4,0"/>
                         <Button Content="—" Style="{StaticResource IconButton}" Click="MinimizeButton_Click"/>
                         <Button Content="✕" Style="{StaticResource IconButton}" Click="CloseButton_Click" Margin="4,0,0,0"/>
                     </StackPanel>

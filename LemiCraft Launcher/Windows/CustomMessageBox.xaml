@@ -79,8 +79,10 @@
                         Margin="0,0,16,0"
                         VerticalAlignment="Top">
                     <TextBlock x:Name="IconText"
-                               Text="ℹ️"
+                               Text="&#xE946;"
+                               FontFamily="Segoe MDL2 Assets"
                                FontSize="20"
+                               Foreground="White"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
                 </Border>

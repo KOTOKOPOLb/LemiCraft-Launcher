@@ -5,9 +5,12 @@ namespace LemiCraft_Launcher.Models
         public string Version { get; set; } = "1.0.0";
         public DateTime ReleaseDate { get; set; }
         public string DownloadUrl { get; set; } = "";
+        public string PortableUrl { get; set; } = "";
+        public string ReleaseUrl { get; set; } = "";
         public List<string> Changelog { get; set; } = [];
         public bool IsRequired { get; set; }
         public long FileSize { get; set; }
+        public long PortableSize { get; set; }
         public string Sha256Hash { get; set; } = "";
     }
 

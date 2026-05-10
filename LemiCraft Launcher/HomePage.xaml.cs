@@ -106,7 +106,7 @@ namespace LemiCraft_Launcher
             if (BottomFade != null) BottomFade.BeginAnimation(OpacityProperty, bottomAnim);
         }
 
-        private async Task UpdateServerStatus()
+        private async Task UpdateServerStatus(bool isRetry = false)
         {
             ServerStatus? status = null;
 
@@ -123,6 +123,13 @@ namespace LemiCraft_Launcher
                 ServerStatusDot.Foreground = Brushes.Red;
                 OnlineText.Text = "0/0";
                 PlayersProgressBar.Value = 0;
+
+                if (!isRetry)
+                {
+                    await Task.Delay(10000);
+                    await UpdateServerStatus(isRetry: true);
+                }
+
                 return;
             }
 

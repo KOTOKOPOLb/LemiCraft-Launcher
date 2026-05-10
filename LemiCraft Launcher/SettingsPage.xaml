@@ -468,6 +468,11 @@
                             <CheckBox x:Name="AutoConnectCheckBox"
                                   Content="Автоматически подключаться к серверу"
                                   Style="{StaticResource ModernCheckBox}"
+                                  Margin="0,0,0,12"/>
+
+                            <CheckBox x:Name="CrashAnalyzerCheckBox"
+                                  Content="Анализатор крашей (предлагать просмотр лога при аварийном закрытии)"
+                                  Style="{StaticResource ModernCheckBox}"
                                   Margin="0,0,0,16"/>
 
                             <Border Height="1" Background="#374151" Margin="0,4,0,16"/>

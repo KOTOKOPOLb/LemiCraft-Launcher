@@ -37,7 +37,7 @@ PrivilegesRequiredOverridesAllowed=dialog
 ; ================================================
 ; Output Settings
 ; ================================================
-OutputDir=..\LemiCraft Launcher\publish
+OutputDir=..\LemiCraft Launcher\publish\installer
 OutputBaseFilename=LemiCraft_Installer
 SetupIconFile=..\LemiCraft Launcher\Resources\logo.ico
 UninstallDisplayIcon={app}\{#AppExeName}
@@ -104,8 +104,7 @@ Name: "quicklaunchicon"; Description: "Создать ярлык в панели
 ; ================================================
 ; Main Application
 ; ================================================
-Source: "..\LemiCraft Launcher\publish\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion signonce
-;Source: "..\LemiCraft Launcher\publish\*"; Excludes: "*.pdb"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\LemiCraft Launcher\publish\installer\*"; Excludes: "*.pdb,*.xml,createdump.exe,mscordaccore*.dll,mscordbi.dll,Microsoft.DiaSymReader.Native.amd64.dll,LemiCraft_Installer.exe,cs\*,de\*,es\*,fr\*,it\*,ja\*,ko\*,pl\*,pt-BR\*,tr\*,zh-Hans\*,zh-Hant\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 ; ================================================
@@ -135,6 +134,14 @@ Root: HKCU; Subkey: "Software\LemiCraft\Launcher"; ValueType: string; ValueName:
 Root: HKCU; Subkey: "Software\LemiCraft\Launcher"; ValueType: string; ValueName: "Version"; ValueData: "{#AppVersion}"
 Root: HKCU; Subkey: "Software\LemiCraft\Launcher"; ValueType: string; ValueName: "InstallDate"; ValueData: "{code:GetCurrentDate}"
 
+; ================================================
+; lemicraft:// URL Protocol
+; ================================================
+Root: HKCU; Subkey: "Software\Classes\lemicraft"; ValueType: string; ValueName: ""; ValueData: "URL:LemiCraft Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\lemicraft"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKCU; Subkey: "Software\Classes\lemicraft\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExeName},0"
+Root: HKCU; Subkey: "Software\Classes\lemicraft\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExeName}"" ""%1"""
+
 [Run]
 ; ================================================
 ; Post-Installation Actions
@@ -163,23 +170,11 @@ begin
 end;
 
 // ================================================
-// ФУНКЦИЯ: Конвертация Boolean в String
-// ================================================
-function BoolToStr(B: Boolean): String;
-begin
-  if B then
-    Result := 'true'
-  else
-    Result := 'false';
-end;
-
-// ================================================
 // ФУНКЦИЯ: Проверка .NET 8.0+
 // ================================================
 function IsDotNet80OrHigherInstalled(): Boolean;
 var
-  Version: String;
-  Major, Minor: Integer;
+  Major: Integer;
   DotPos: Integer;
   DotNetInstallPath: String;
   FindRec: TFindRec;
@@ -378,6 +373,7 @@ begin
   begin
     RegDeleteKeyIncludingSubkeys(HKCU, 'Software\LemiCraft\Launcher');
     RegDeleteKeyIfEmpty(HKCU, 'Software\LemiCraft');
+    RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Classes\lemicraft');
   end;
 end;
 

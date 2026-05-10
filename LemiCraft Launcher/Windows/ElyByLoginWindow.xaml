@@ -31,7 +31,7 @@
                     MouseLeftButtonDown="TitleBar_MouseDown">
                 <Grid Margin="20,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="🔷" FontSize="18" Margin="0,0,10,0"/>
+                        <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White" Margin="0,0,10,0"/>
                         <TextBlock Text="Ely.by — Авторизация для скинов"
                                    FontSize="14"
                                    FontWeight="SemiBold"
@@ -92,7 +92,7 @@
                     Background="#1E3A5F"
                     Padding="20,12">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="ℹ️" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#93C5FD" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <TextBlock TextWrapping="Wrap"
                                VerticalAlignment="Center"
                                Foreground="#93C5FD"

@@ -1,72 +1,78 @@
 # LemiCraft Launcher
 
 <p align="center">
-  <strong>Официальный лаунчер для Minecraft сервера LemiCraft</strong>
+  <img src="assets/logo_rounded.svg" width="96" height="96" alt="LemiCraft"/>
 </p>
 
 <p align="center">
-  <a href="https://lemicraft.ru">🌐 Сайт</a> •
-  <a href="https://discord.gg/ybC6QM8WTM">💬 Discord</a> •
-  <a href="https://wiki.lemicraft.ru">📖 Wiki</a>
+  Официальный лаунчер для Minecraft сервера <a href="https://lemicraft.ru">LemiCraft</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.6.0-blue" alt="version"/>
+  <img src="https://img.shields.io/badge/.NET-8.0-purple" alt=".NET 8"/>
+  <img src="https://img.shields.io/badge/platform-Windows-lightgrey" alt="Windows"/>
 </p>
 
 ---
 
-## 📋 О проекте
+## Возможности
 
-LemiCraft Launcher — современный лаунчер для Minecraft с автоматической установкой модпаков, управлением профилями и удобной игры на проекте LemiCraft
+- **Авторизация** - Microsoft и Ely.by с поддержкой authlib-injector
+- **Автоустановка модпаков** - скачивание, обновление и управление версиями
+- **Импорт модов** - по коду или из каталога
+- **Новости** - лента с поддержкой Markdown прямо в лаунчере
+- **Скины** - просмотр, загрузка и управление через библиотеку скинов
+- **Мониторинг сервера** - статус онлайн в реальном времени
+- **Автообновление** - лаунчер и модпак обновляются автоматически
+- **Анализатор крашей** - при аварийном закрытии Minecraft предлагает просмотреть лог
+- **Гибкие настройки** - RAM, JVM-аргументы, путь Java, путь установки игры
 
-### ✨ Основные возможности
+## Установка
 
-- 🎮 **Автоматическая установка** модпаков и обновлений
-- 🔐 **Авторизация** через Microsoft и Ely.by
-- 📰 **Новости** и обновления прямо в лаунчере
-- ⚙️ **Гибкие настройки** Java, RAM, пути установки
-- 📊 **Мониторинг** статуса сервера в реальном времени
-- 🎨 **Современный UI** с темной темой и плавными анимациями
+**Через установщик (рекомендуется)**
 
-## 🚀 Установка
+Скачайте `LemiCraft_Installer.exe` со страницы [Releases](../../releases/latest), запустите и следуйте инструкциям
 
-1. Скачайте установщик с [Releases](../../releases/latest)
-2. Запустите `LemiCraft_Installer.exe`
-3. Следуйте инструкциям установщика
+**Портативная версия**
 
-## 🏗️ Технологии
+Скачайте `LemiCraft_Launcher_*_portable.exe` - запускается без установки, можно использовать портативно
 
-- **Framework**: .NET 8.0, WPF
-- **Авторизация**: Microsoft Identity Client, Ely.by API
-- **Minecraft**: CmlLib.Core
-- **UI**: WPF с кастомными стилями и анимациями
-- **Markdown**: Markdig для отображения новостей
+## Сборка из исходников
 
-## 🤝 Вклад в проект
+Требования: Visual Studio 22+, .NET 8 SDK, Inno Setup 6 (для сборки установщика)
 
-Мы приветствуем вклад в развитие проекта! 
+```
+git clone https://github.com/KOTOKOPOLb/LemiCraft-Launcher
+cd lemicraft-launcher
+```
 
-### Как внести свой вклад
+**Запуск в режиме отладки**
 
-1. **Fork** репозитория
-2. Создайте ветку для вашей фичи (`git checkout -b feature/AmazingFeature`)
-3. Зафиксируйте изменения (`git commit -m 'Add some AmazingFeature'`)
-4. Отправьте в ветку (`git push origin feature/AmazingFeature`)
-5. Откройте **Pull Request**
+Откройте `LemiCraft Launcher.sln` в Visual Studio, выберите конфигурацию Debug и нажмите F5.
 
-## 📄 Лицензия
+**Сборка релиза**
 
-Этот проект лицензирован под MIT License - см. файл [LICENSE.txt](LICENSE.txt) для деталей
+```
+# Портативная версия
+dotnet publish "LemiCraft Launcher/LemiCraft Launcher.csproj" -p:PublishProfile=Portable
 
-## 🌐 Сообщество
+# Установщик (автоматически запускает Inno Setup)
+dotnet publish "LemiCraft Launcher/LemiCraft Launcher.csproj" -p:PublishProfile=Installer
+```
 
-- **Discord**: [LemiCraft](https://discord.gg/ybC6QM8WTM)
-- **Сайт**: [lemicraft.ru](https://lemicraft.ru)
-- **Wiki**: [wiki.lemicraft.ru](https://wiki.lemicraft.ru)
-- **Правила**: [lemicraft.ru/rules](https://lemicraft.ru/rules)
+Или одной командой через `build.bat` - собирает обе версии и кладёт их в `publish/dist/`.
 
-## 💬 Поддержка
+## Стек
 
-Нужна помощь?
+| | |
+|---|---|
+| Runtime | .NET 8.0, WPF + WinForms |
+| Minecraft | CmlLib.Core 4.x |
+| Авторизация | Microsoft Identity Client, Ely.by API, authlib-injector |
+| Новости | Markdig (Markdown) |
+| Установщик | Inno Setup 6 |
 
-- 📖 Проверьте [Wiki](https://wiki.lemicraft.ru)
-- 💬 Задайте вопрос в [Discord](https://discord.gg/ybC6QM8WTM)
-- 🐛 Создайте [Issue](../../issues) для багов
-- ✨ Предложите [Feature Request](../../issues/new?template=feature_request.md)
+## Ссылки
+
+[Сайт](https://lemicraft.ru) · [Discord](https://discord.gg/ybC6QM8WTM) · [Wiki](https://wiki.lemicraft.ru) · [Правила](https://lemicraft.ru/rules)

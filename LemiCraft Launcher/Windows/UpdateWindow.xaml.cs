@@ -1,6 +1,7 @@
 using LemiCraft_Launcher.Models;
 using LemiCraft_Launcher.Services;
 using LemiCraft_Launcher.Utils;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -45,9 +46,17 @@ namespace LemiCraft_Launcher.Windows
         private void LoadVersionInfo()
         {
             VersionText.Text = $"{AppVersion.Current}  →  {_version.Version}";
-            FileSizeText.Text = FormatFileSize(_version.FileSize);
+            FileSizeText.Text = AppVersion.IsPortable && _version.PortableSize > 0
+                ? FormatFileSize(_version.PortableSize)
+                : FormatFileSize(_version.FileSize);
             ReleaseDateText.Text = _version.ReleaseDate.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("ru-RU"));
             ChangelogList.ItemsSource = _version.Changelog;
+
+            if (AppVersion.IsPortable)
+            {
+                UpdateButtonIcon.Text = "↗";
+                UpdateButtonText.Text = "Скачать";
+            }
 
             if (_version.IsRequired)
             {
@@ -96,6 +105,18 @@ namespace LemiCraft_Launcher.Windows
         private async void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isUpdating) return;
+
+            if (AppVersion.IsPortable)
+            {
+                var url = !string.IsNullOrEmpty(_version.PortableUrl)
+                    ? _version.PortableUrl
+                    : !string.IsNullOrEmpty(_version.ReleaseUrl)
+                        ? _version.ReleaseUrl
+                        : _version.DownloadUrl;
+
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+                return;
+            }
 
             _isUpdating = true;
             UpdateButton.IsEnabled = false;

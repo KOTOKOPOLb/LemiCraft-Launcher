@@ -449,18 +449,24 @@ namespace LemiCraft_Launcher.Services
             public string Version { get; set; } = "";
             public DateTime ReleaseDate { get; set; }
             public string DownloadUrl { get; set; } = "";
+            public string PortableUrl { get; set; } = "";
+            public string ReleaseUrl { get; set; } = "";
             public List<string> Changelog { get; set; } = new();
             public bool IsRequired { get; set; }
             public long FileSize { get; set; }
+            public long PortableSize { get; set; }
 
             public LauncherVersion ToLauncherVersion() => new()
             {
                 Version = Version,
                 ReleaseDate = ReleaseDate,
                 DownloadUrl = DownloadUrl,
+                PortableUrl = PortableUrl,
+                ReleaseUrl = ReleaseUrl,
                 Changelog = Changelog,
                 IsRequired = IsRequired,
-                FileSize = FileSize
+                FileSize = FileSize,
+                PortableSize = PortableSize
             };
         }
 

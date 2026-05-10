@@ -108,13 +108,15 @@
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Visibility="Visible">
-                                    <TextBlock Text="⏳"
+                                    <TextBlock Text="&#xE916;"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               Foreground="White"
                                                FontSize="72"
                                                HorizontalAlignment="Center"
                                                Margin="0,0,0,20">
                                         <TextBlock.RenderTransform>
-                                            <RotateTransform x:Name="LoadingRotation" 
-                                                             CenterX="0" 
+                                            <RotateTransform x:Name="LoadingRotation"
+                                                             CenterX="0"
                                                              CenterY="0"/>
                                         </TextBlock.RenderTransform>
                                         <TextBlock.Triggers>
@@ -150,7 +152,9 @@
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Visibility="Collapsed">
-                                    <TextBlock Text="📦"
+                                    <TextBlock Text="&#xE8F1;"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               Foreground="#6B7280"
                                                FontSize="72"
                                                HorizontalAlignment="Center"
                                                Margin="0,0,0,20"/>
@@ -161,8 +165,7 @@
                                                HorizontalAlignment="Center"
                                                Margin="0,0,0,8"/>
 
-                                    <Button Content="🔄 Попробовать снова"
-                                            Click="RetryLoadingButton_Click"
+                                    <Button Click="RetryLoadingButton_Click"
                                             Background="#374151"
                                             Foreground="White"
                                             BorderThickness="0"
@@ -170,13 +173,19 @@
                                             FontSize="13"
                                             Cursor="Hand"
                                             HorizontalAlignment="Center">
+                                        <Button.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="White" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Попробовать снова" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button.Content>
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border Background="{TemplateBinding Background}"
                                                         Padding="{TemplateBinding Padding}"
                                                         CornerRadius="8">
                                                     <ContentPresenter HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"/>
+                                                                      VerticalAlignment="Center"/>
                                                 </Border>
                                             </ControlTemplate>
                                         </Button.Template>
@@ -237,7 +246,6 @@
 
                 <Button x:Name="DeleteButton"
                         Grid.Column="0"
-                        Content="🗑️ Удалить"
                         Background="#EF4444"
                         Foreground="White"
                         BorderThickness="0"
@@ -246,6 +254,12 @@
                         FontWeight="SemiBold"
                         Cursor="Hand"
                         Click="DeleteButton_Click">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="White" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Удалить" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
                     <Button.Style>
                         <Style TargetType="Button">
                             <Setter Property="Template">
@@ -272,7 +286,6 @@
 
                 <Button x:Name="ApplyButton"
                         Grid.Column="1"
-                        Content="✨ Применить"
                         Background="#22C55E"
                         Foreground="White"
                         BorderThickness="0"
@@ -283,6 +296,12 @@
                         Margin="10,0"
                         Cursor="Hand"
                         Click="ApplyButton_Click">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="White" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Применить" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button.Content>
                     <Button.Style>
                         <Style TargetType="Button">
                             <Setter Property="Template">
